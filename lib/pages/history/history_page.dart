@@ -8,6 +8,7 @@ import '../../services/sync.dart';
 import '../../utils/enums.dart';
 import '../../utils/globals.dart' as globals;
 import '../../utils/helpers.dart';
+import '../../widgets/sap_module_ui.dart';
 import '../../widgets/snackbar_msg.dart';
 import '../../widgets/top_bar.dart';
 import 'history_detail_page.dart';
@@ -129,8 +130,6 @@ class _HistoryPageState extends State<HistoryPage> {
         where tr.deleted_at is null and tr.employee_id=${_profile?.id} order by tr.id desc''';
         _table = 'k3_trans';
         break;
-      default:
-        break;
     }
 
     if (widget.history == History.action) {
@@ -164,6 +163,7 @@ class _HistoryPageState extends State<HistoryPage> {
             var lastData =
                 val.where((e) => e['id'] as int == widget.lastId).toList();
             if (lastData.isNotEmpty) {
+              if (!mounted) return;
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -321,18 +321,18 @@ class _HistoryPageState extends State<HistoryPage> {
                                         .delete(_table,
                                             _rawData[index]['id'] as int)
                                         .then((val) {
+                                      if (!mounted) return;
                                       if (val > 0) {
                                         _db.execute(
                                             '''delete from ${_table.replaceAll('_trans', '')}_details 
                                             where tran_id=${_rawData[index]['id'] as int}''');
-                                        if (!mounted) return;
                                         setState(
                                             () => _rawData.removeAt(index));
-                                        SnackBarMsg.success(
-                                            context, 'Data berhasil dihapus!');
+                                        SnackBarMsg.success(this.context,
+                                            'Data berhasil dihapus!');
                                       } else {
-                                        SnackBarMsg.danger(
-                                            context, 'Data gagal dihapus!');
+                                        SnackBarMsg.danger(this.context,
+                                            'Data gagal dihapus!');
                                       }
                                     });
                                   },
@@ -352,81 +352,52 @@ class _HistoryPageState extends State<HistoryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final accent = moduleAccentColor(widget.module);
+
     return Scaffold(
+      backgroundColor: const Color(0xFFF6F8FB),
       appBar: TopBar(
-          title:
-              '${titleCase(widget.history.name)} ${pageTitle(widget.module)}'),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: (_rawData.isNotEmpty)
-            ? ListView.builder(
-                controller: _scrollCtrl,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _rawData.length,
-                itemBuilder: (context, index) {
-                  var date = DateTime.parse(_rawData[index]['date']);
-                  var sync =
-                      (_rawData[index]['sync_id'] == null) ? false : true;
-                  return Card(
-                    color: Colors.white,
-                    shadowColor: (sync) ? Colors.green : Colors.red,
-                    child: ListTile(
-                      title: Text(
-                        titleCase(_rawData[index]['title'] ?? ''),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.indigo,
-                        ),
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                              'Note: ${titleCase(_rawData[index]['remark'] ?? '')}'),
-                          Text(
-                              'Area: ${titleCase(_rawData[index]['area_name'] ?? '')}'),
-                          Text(
-                              'Lokasi: ${titleCase(_rawData[index]['location_name'] ?? '')}'),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Text(
-                                  '${DateFormat('dd/MM/yyyy').format(date)} ${_rawData[index]['time']}'),
-                              Expanded(
-                                child: Container(),
-                              ),
-                              (widget.history == History.summary)
-                                  ? (sync)
-                                      ? const Text('SDH SINKRON',
-                                          style: TextStyle(
-                                            color: Colors.green,
-                                            fontWeight: FontWeight.bold,
-                                          ))
-                                      : const Text('BLM SINKRON',
-                                          style: TextStyle(
-                                            color: Colors.red,
-                                            fontWeight: FontWeight.bold,
-                                          ))
-                                  : Text(
-                                      '${globals.status[_rawData[index]['status'] as int]}',
-                                      style: TextStyle(
-                                        color: globals.statusColor[
-                                            _rawData[index]['status'] as int],
-                                        fontWeight: FontWeight.bold,
-                                      )),
-                            ],
-                          ),
-                        ],
-                      ),
-                      trailing: Icon(
-                        Icons.arrow_forward_ios,
-                        color: Colors.indigo.shade400,
-                        size: 18,
-                      ),
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 10),
+        title: '${titleCase(widget.history.name)} ${pageTitle(widget.module)}',
+      ),
+      body: RefreshIndicator(
+        onRefresh: () async => _getData(),
+        child: SingleChildScrollView(
+          controller: _scrollCtrl,
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 96),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SapModuleHeader(
+                module: widget.module,
+                trailing: SapStatusPill(
+                  label: '${_rawData.length} Data',
+                  color: Colors.white,
+                  icon: Icons.dataset_rounded,
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                _historyTitle(),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 10),
+              if (_rawData.isNotEmpty)
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _rawData.length,
+                  itemBuilder: (context, index) {
+                    final row = _rawData[index] as Map<String, dynamic>;
+                    return _HistoryRecordCard(
+                      row: row,
+                      module: widget.module,
+                      history: widget.history,
+                      accent: accent,
                       onTap: () {
                         if (widget.history == History.summary) {
                           _showBottomSheet(index);
@@ -437,43 +408,217 @@ class _HistoryPageState extends State<HistoryPage> {
                               builder: (context) => HistoryDetailPage(
                                 widget.module,
                                 widget.history,
-                                _rawData[index] as Map<String, dynamic>,
+                                row,
                               ),
                             ),
                           );
                         }
                       },
-                    ),
-                  );
-                },
-              )
-            : Container(
-                margin: const EdgeInsets.only(top: 100),
-                width: MediaQuery.of(context).size.width,
+                    );
+                  },
+                )
+              else
+                _EmptyHistoryState(module: widget.module),
+            ],
+          ),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: accent,
+        foregroundColor: Colors.white,
+        onPressed: () => openPage(context, widget.module),
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Buat Baru'),
+      ),
+    );
+  }
+
+  String _historyTitle() {
+    switch (widget.history) {
+      case History.summary:
+        return 'Riwayat Laporan';
+      case History.action:
+        return 'Action yang Perlu Ditindaklanjuti';
+      case History.monitoring:
+        return 'Monitoring Progress Action';
+    }
+  }
+}
+
+class _HistoryRecordCard extends StatelessWidget {
+  const _HistoryRecordCard({
+    required this.row,
+    required this.module,
+    required this.history,
+    required this.accent,
+    required this.onTap,
+  });
+
+  final Map<String, dynamic> row;
+  final Module module;
+  final History history;
+  final Color accent;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final date = DateTime.tryParse('${row['date']}');
+    final sync = row['sync_id'] != null;
+    final title = titleCase('${row['title'] ?? pageTitle(module)}');
+    final remark = titleCase('${row['remark'] ?? '-'}');
+    final area = titleCase('${row['area_name'] ?? '-'}');
+    final location = titleCase('${row['location_name'] ?? '-'}');
+    final timeText = [
+      if (date != null) DateFormat('dd MMM yyyy').format(date),
+      if ((row['time'] ?? '').toString().isNotEmpty) row['time'],
+    ].join(' • ');
+
+    return SapSoftCard(
+      onTap: onTap,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: .12),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Icon(moduleIcon(module), color: accent, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Image(
-                      image: AssetImage('assets/images/no-data.png'),
-                      width: 180,
-                    ),
-                    const SizedBox(height: 30),
                     Text(
-                      'Data ${pageTitle(widget.module)} Tidak Ditemukan!',
+                      title,
                       style: const TextStyle(
-                        fontStyle: FontStyle.italic,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.black87,
+                        height: 1.25,
                       ),
-                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        if (history == History.summary)
+                          sync
+                              ? const SapStatusPill(
+                                  label: 'Sudah Sinkron',
+                                  color: Color(0xFF16A34A),
+                                  icon: Icons.cloud_done_rounded,
+                                )
+                              : const SapStatusPill(
+                                  label: 'Belum Sinkron',
+                                  color: Color(0xFFEF4444),
+                                  icon: Icons.cloud_off_rounded,
+                                )
+                        else
+                          SapStatusPill(
+                            label: _actionStatusLabel(row),
+                            color: _actionStatusColor(row),
+                            icon: Icons.flag_rounded,
+                          ),
+                        if (timeText.isNotEmpty)
+                          SapStatusPill(
+                            label: timeText,
+                            color: const Color(0xFF64748B),
+                            icon: Icons.schedule_rounded,
+                          ),
+                      ],
                     ),
                   ],
                 ),
               ),
+              Icon(Icons.chevron_right_rounded,
+                  color: Colors.blueGrey.shade300),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SapInfoLine(icon: Icons.notes_rounded, text: 'Note: $remark'),
+          SapInfoLine(icon: Icons.map_rounded, text: 'Area: $area'),
+          SapInfoLine(icon: Icons.place_rounded, text: 'Lokasi: $location'),
+        ],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.blue.shade700,
-        onPressed: () => openPage(context, widget.module),
-        child: const Icon(Icons.add, color: Colors.white, size: 40),
+    );
+  }
+
+  String _actionStatusLabel(Map<String, dynamic> row) {
+    final status = row['status'];
+    if (status is int && globals.status.containsKey(status)) {
+      return '${globals.status[status]}';
+    }
+    return 'Open';
+  }
+
+  Color _actionStatusColor(Map<String, dynamic> row) {
+    final status = row['status'];
+    if (status is int && globals.statusColor.containsKey(status)) {
+      return globals.statusColor[status]!;
+    }
+    return const Color(0xFFF59E0B);
+  }
+}
+
+class _EmptyHistoryState extends StatelessWidget {
+  const _EmptyHistoryState({required this.module});
+
+  final Module module;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = moduleAccentColor(module);
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 20),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 82,
+            height: 82,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: .1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.inbox_rounded, color: accent, size: 42),
+          ),
+          const SizedBox(height: 18),
+          Text(
+            'Data ${pageTitle(module)} belum ada',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: Colors.black87,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Tekan tombol Buat Baru untuk mulai membuat laporan.',
+            style: TextStyle(
+              color: Colors.blueGrey.shade600,
+              fontSize: 13,
+              height: 1.35,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

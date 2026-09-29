@@ -4,6 +4,7 @@ import '../../services/database.dart';
 import '../../services/preference.dart';
 import '../../utils/enums.dart';
 import '../../utils/helpers.dart';
+import '../../widgets/sap_module_ui.dart';
 import '../../widgets/top_bar.dart';
 import 'history_page.dart';
 
@@ -89,126 +90,217 @@ class _OptionPageState extends State<OptionPage> {
 
   @override
   Widget build(BuildContext context) {
+    final accent = moduleAccentColor(widget.module);
+
     return Scaffold(
+      backgroundColor: const Color(0xFFF6F8FB),
       appBar: TopBar(title: pageTitle(widget.module)),
-      body: Container(
-        margin: const EdgeInsets.all(20),
-        width: MediaQuery.of(context).size.width,
-        height: 290,
-        decoration: BoxDecoration(
-          color: Colors.white54,
-          border: Border.all(color: Colors.indigo.shade200),
-          borderRadius: const BorderRadius.all(Radius.circular(20)),
-        ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ListTile(
-              leading: const Icon(
-                Icons.summarize_outlined,
-                color: Colors.indigo,
-                size: 36,
-              ),
-              title: const Text(
-                'Summary',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              subtitle: Text('$_summary Data'),
-              trailing: Icon(
-                Icons.arrow_forward_ios,
-                color: Colors.indigo.shade400,
-                size: 16,
-              ),
-              contentPadding: const EdgeInsets.fromLTRB(15, 10, 15, 10),
-              shape: Border(bottom: BorderSide(color: Colors.indigo.shade200)),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => HistoryPage(
-                      widget.module,
-                      History.summary,
-                    ),
+            SapModuleHeader(module: widget.module),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: _MiniCounter(
+                    label: 'Summary',
+                    value: _summary ?? 0,
+                    color: accent,
                   ),
-                );
-              },
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _MiniCounter(
+                    label: 'Action',
+                    value: _action ?? 0,
+                    color: const Color(0xFFF59E0B),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _MiniCounter(
+                    label: 'Monitor',
+                    value: _monitor ?? 0,
+                    color: const Color(0xFF16A34A),
+                  ),
+                ),
+              ],
             ),
-            ListTile(
-              leading: const Icon(
-                Icons.send_to_mobile,
-                color: Colors.indigo,
-                size: 36,
+            const SizedBox(height: 18),
+            const Text(
+              'Pilih Alur Kerja',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: Colors.black87,
               ),
-              title: const Text(
-                'Action',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              subtitle: Text('$_action Data'),
-              trailing: Icon(
-                Icons.arrow_forward_ios,
-                color: Colors.indigo.shade400,
-                size: 16,
-              ),
-              contentPadding: const EdgeInsets.fromLTRB(15, 10, 15, 10),
-              shape: Border(bottom: BorderSide(color: Colors.indigo.shade200)),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => HistoryPage(
-                      widget.module,
-                      History.action,
-                    ),
-                  ),
-                );
-              },
             ),
-            ListTile(
-              leading: const Icon(
-                Icons.find_in_page,
-                color: Colors.indigo,
-                size: 36,
-              ),
-              title: const Text(
-                'Monitoring',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              subtitle: Text('$_monitor Data'),
-              trailing: Icon(
-                Icons.arrow_forward_ios,
-                color: Colors.indigo.shade400,
-                size: 16,
-              ),
-              contentPadding: const EdgeInsets.fromLTRB(15, 10, 15, 10),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => HistoryPage(
-                      widget.module,
-                      History.monitoring,
-                    ),
-                  ),
-                );
-              },
+            const SizedBox(height: 10),
+            _OptionActionCard(
+              title: 'Summary',
+              subtitle: 'Lihat laporan yang sudah dibuat dan status sinkron.',
+              count: _summary ?? 0,
+              icon: Icons.summarize_rounded,
+              color: accent,
+              onTap: () => _openHistory(History.summary),
+            ),
+            _OptionActionCard(
+              title: 'Action',
+              subtitle:
+                  'Tindak lanjuti action yang menjadi tanggung jawab Anda.',
+              count: _action ?? 0,
+              icon: Icons.assignment_turned_in_rounded,
+              color: const Color(0xFFF59E0B),
+              onTap: () => _openHistory(History.action),
+            ),
+            _OptionActionCard(
+              title: 'Monitoring',
+              subtitle: 'Pantau semua progres action sampai close.',
+              count: _monitor ?? 0,
+              icon: Icons.monitor_heart_rounded,
+              color: const Color(0xFF16A34A),
+              onTap: () => _openHistory(History.monitoring),
             ),
           ],
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.blue.shade700,
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: accent,
+        foregroundColor: Colors.white,
         onPressed: () => openPage(context, widget.module),
-        child: const Icon(Icons.add, color: Colors.white, size: 40),
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Buat Baru'),
+      ),
+    );
+  }
+
+  void _openHistory(History history) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HistoryPage(widget.module, history),
+      ),
+    );
+  }
+}
+
+class _MiniCounter extends StatelessWidget {
+  const _MiniCounter({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final String label;
+  final int value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$value',
+            style: TextStyle(
+              color: color,
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.black54,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OptionActionCard extends StatelessWidget {
+  const _OptionActionCard({
+    required this.title,
+    required this.subtitle,
+    required this.count,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final int count;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SapSoftCard(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: .12),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(icon, color: color, size: 26),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                    SapStatusPill(label: '$count Data', color: color),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: Colors.blueGrey.shade600,
+                    fontSize: 12,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Icon(Icons.chevron_right_rounded, color: Colors.blueGrey.shade300),
+        ],
       ),
     );
   }
