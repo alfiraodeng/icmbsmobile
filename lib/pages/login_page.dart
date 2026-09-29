@@ -133,7 +133,7 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 80),
                     const Center(
                       child: Image(
-                        image: AssetImage('assets/images/indexsafe-logo.png'),
+                        image: AssetImage('assets/images/logo-mbs.png'),
                         width: 130,
                       ),
                     ),
