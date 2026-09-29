@@ -13,6 +13,7 @@ import '../../services/preference.dart';
 import '../../utils/enums.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/button_app.dart';
+import '../../widgets/sap_form_widgets.dart';
 import '../../widgets/top_bar.dart';
 import 'inspeksi_checklist_page.dart';
 
@@ -251,6 +252,20 @@ class _InspeksiFormPageState extends State<InspeksiFormPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SapFormIntroCard(
+                title: 'Safety Inspeksi',
+                subtitle:
+                    'Pemeriksaan operasional untuk memantau kepatuhan K3 area kerja.',
+                icon: Icons.fact_check_rounded,
+                color: Color(0xFF0F766E),
+              ),
+              const SapFormSectionTitle(
+                title: 'Waktu & Jenis Inspeksi',
+                subtitle:
+                    'Tentukan tanggal, jam, dan jenis inspeksi sebelum memilih area.',
+                icon: Icons.event_note_rounded,
+                color: Color(0xFF0F766E),
+              ),
               const Text(
                 'Tanggal Inspeksi',
                 style: TextStyle(
@@ -355,8 +370,14 @@ class _InspeksiFormPageState extends State<InspeksiFormPage> {
                 },
               ),
               const SizedBox(height: 15),
+              const SapFormSectionTitle(
+                title: 'Lokasi & Penanggung Jawab',
+                subtitle: 'Pilih area utama, detail lokasi/benchmark, dan PJA.',
+                icon: Icons.place_rounded,
+                color: Color(0xFF0F766E),
+              ),
               const Text(
-                'Area Inspeksi',
+                'Area Utama',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -399,7 +420,7 @@ class _InspeksiFormPageState extends State<InspeksiFormPage> {
               ),
               const SizedBox(height: 15),
               const Text(
-                'Lokasi',
+                'Detail Lokasi / Benchmark',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -442,7 +463,7 @@ class _InspeksiFormPageState extends State<InspeksiFormPage> {
               ),
               const SizedBox(height: 15),
               const Text(
-                'Lokasi Detail',
+                'Lokasi Spesifik',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -510,6 +531,13 @@ class _InspeksiFormPageState extends State<InspeksiFormPage> {
               if (widget.module == Module.inspectionWeekly) ...[
                 if (_inspektor >= 1) ...[
                   const SizedBox(height: 15),
+                  const SapFormSectionTitle(
+                    title: 'Tim Inspektor',
+                    subtitle:
+                        'Tambahkan satu atau lebih inspektor yang melakukan pemeriksaan.',
+                    icon: Icons.groups_rounded,
+                    color: Color(0xFF0F766E),
+                  ),
                   const Text(
                     'Inspektor 1',
                     style: TextStyle(

@@ -10,6 +10,7 @@ import '../../models/hazard_tran_model.dart';
 import '../../services/database.dart';
 import '../../services/preference.dart';
 import '../../widgets/button_app.dart';
+import '../../widgets/sap_form_widgets.dart';
 import '../../widgets/top_bar.dart';
 import 'hazard_detail_page.dart';
 
@@ -190,13 +191,27 @@ class _HazardFormPageState extends State<HazardFormPage> {
     return PopScope(
       canPop: false,
       child: Scaffold(
-        appBar: const TopBar(title: 'Hazard Report', back: 2),
+        appBar: const TopBar(title: 'Temuan Hazard', back: 2),
         body: SingleChildScrollView(
           controller: _scrollCtrl,
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SapFormIntroCard(
+                title: 'Temuan Hazard',
+                subtitle:
+                    'Kelola dan laporkan kondisi atau tindakan berbahaya di area operasional.',
+                icon: Icons.warning_amber_rounded,
+                color: Color(0xFFF97316),
+              ),
+              const SapFormSectionTitle(
+                title: 'Waktu Temuan',
+                subtitle:
+                    'Tanggal dan jam otomatis bisa disesuaikan saat temuan terjadi.',
+                icon: Icons.schedule_rounded,
+                color: Color(0xFFF97316),
+              ),
               const Text(
                 'Tanggal Temuan',
                 style: TextStyle(
@@ -265,6 +280,13 @@ class _HazardFormPageState extends State<HazardFormPage> {
                 },
               ),
               const SizedBox(height: 15),
+              const SapFormSectionTitle(
+                title: 'Klasifikasi Bahaya',
+                subtitle:
+                    'Pilih kategori, jenis bahaya, jenis ketidaksesuaian, dan tingkat risiko.',
+                icon: Icons.report_problem_rounded,
+                color: Color(0xFFF97316),
+              ),
               const Text(
                 'Kategori Bahaya',
                 style: TextStyle(
@@ -437,8 +459,15 @@ class _HazardFormPageState extends State<HazardFormPage> {
                 },
               ),
               const SizedBox(height: 15),
+              const SapFormSectionTitle(
+                title: 'Lokasi & Penanggung Jawab',
+                subtitle:
+                    'Pilih area utama, benchmark/lokasi detail, lalu PJA sesuai area.',
+                icon: Icons.place_rounded,
+                color: Color(0xFFF97316),
+              ),
               const Text(
-                'Area',
+                'Area Utama',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -481,7 +510,7 @@ class _HazardFormPageState extends State<HazardFormPage> {
               ),
               const SizedBox(height: 15),
               const Text(
-                'Lokasi',
+                'Detail Lokasi / Benchmark',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -524,7 +553,7 @@ class _HazardFormPageState extends State<HazardFormPage> {
               ),
               const SizedBox(height: 15),
               const Text(
-                'Lokasi Detail',
+                'Lokasi Spesifik',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -548,7 +577,7 @@ class _HazardFormPageState extends State<HazardFormPage> {
               ),
               const SizedBox(height: 15),
               const Text(
-                'PJA',
+                'Penanggung Jawab Area (PJA)',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,

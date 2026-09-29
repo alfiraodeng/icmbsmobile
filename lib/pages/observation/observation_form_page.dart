@@ -11,6 +11,7 @@ import '../../models/observation_tran_model.dart';
 import '../../services/database.dart';
 import '../../services/preference.dart';
 import '../../widgets/button_app.dart';
+import '../../widgets/sap_form_widgets.dart';
 import '../../widgets/top_bar.dart';
 import 'observation_detail_page.dart';
 
@@ -165,8 +166,21 @@ class _ObservationFormPageState extends State<ObservationFormPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SapFormIntroCard(
+                title: 'Observasi Lapangan',
+                subtitle:
+                    'Laporkan aktivitas, perilaku, dan kondisi operasional yang diamati.',
+                icon: Icons.visibility_rounded,
+                color: Color(0xFF2563EB),
+              ),
+              const SapFormSectionTitle(
+                title: 'Waktu Observasi',
+                subtitle: 'Tanggal dan jam observasi lapangan.',
+                icon: Icons.schedule_rounded,
+                color: Color(0xFF2563EB),
+              ),
               const Text(
-                'Tanggal',
+                'Tanggal Observasi',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -201,7 +215,7 @@ class _ObservationFormPageState extends State<ObservationFormPage> {
               ),
               const SizedBox(height: 15),
               const Text(
-                'Jam',
+                'Waktu Observasi',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -233,8 +247,14 @@ class _ObservationFormPageState extends State<ObservationFormPage> {
                 },
               ),
               const SizedBox(height: 15),
+              const SapFormSectionTitle(
+                title: 'Lokasi Observasi',
+                subtitle: 'Isi area utama, benchmark, dan lokasi spesifik/GPS.',
+                icon: Icons.place_rounded,
+                color: Color(0xFF2563EB),
+              ),
               const Text(
-                'Area',
+                'Area Utama',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -277,7 +297,7 @@ class _ObservationFormPageState extends State<ObservationFormPage> {
               ),
               const SizedBox(height: 15),
               const Text(
-                'Lokasi',
+                'Detail Lokasi / Benchmark',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -320,7 +340,7 @@ class _ObservationFormPageState extends State<ObservationFormPage> {
               ),
               const SizedBox(height: 15),
               const Text(
-                'Lokasi Detail',
+                'Lokasi Spesifik',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,

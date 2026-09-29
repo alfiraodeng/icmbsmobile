@@ -11,6 +11,7 @@ import '../../utils/enums.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/alert_app.dart';
 import '../../widgets/button_app.dart';
+import '../../widgets/sap_form_widgets.dart';
 import '../../widgets/snackbar_msg.dart';
 import '../../widgets/top_bar.dart';
 import '../../widgets/upload_files.dart';
@@ -57,15 +58,29 @@ class _HazardDetailPageState extends State<HazardDetailPage> {
     return PopScope(
       canPop: false,
       child: Scaffold(
-        appBar: const TopBar(title: 'Hazard Report', back: 2),
+        appBar: const TopBar(title: 'Detail Temuan Hazard', back: 2),
         body: SingleChildScrollView(
           controller: _scrollCtrl,
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SapFormIntroCard(
+                title: 'Detail Temuan Hazard',
+                subtitle:
+                    'Lengkapi evidence, detail kondisi bahaya, dan rencana tindak lanjut.',
+                icon: Icons.assignment_rounded,
+                color: Color(0xFFF97316),
+              ),
+              const SapFormSectionTitle(
+                title: 'Foto Bukti Temuan',
+                subtitle:
+                    'Ambil foto langsung atau pilih file sebagai evidence laporan.',
+                icon: Icons.photo_camera_rounded,
+                color: Color(0xFFF97316),
+              ),
               const Text(
-                'Upload Foto Temuan',
+                'Foto Bukti Temuan',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -146,7 +161,7 @@ class _HazardDetailPageState extends State<HazardDetailPage> {
               if (_image != null) const UploadFiles('HazardDetail1', 0),
               const SizedBox(height: 15),
               const Text(
-                'Keterangan Temuan',
+                'Detail Temuan Hazard',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -196,17 +211,18 @@ class _HazardDetailPageState extends State<HazardDetailPage> {
               Visibility(
                 visible: _remark.text != '' ? true : false,
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SizedBox(
-                      width: 40,
-                      child: Radio(
-                        activeColor: Colors.green,
-                        value: true,
-                        groupValue: _repair,
-                        onChanged: (value) {
+                    Expanded(
+                      child: ChoiceChip(
+                        selected: _repair == true,
+                        label:
+                            const Center(child: Text('YA, selesai saat ini')),
+                        selectedColor: Colors.green.shade100,
+                        checkmarkColor: Colors.green,
+                        onSelected: (_) {
                           setState(() => _repair = true);
                           Future.delayed(const Duration(milliseconds: 200), () {
+                            if (!_scrollCtrl.hasClients) return;
                             _scrollCtrl.animateTo(
                               _scrollCtrl.position.maxScrollExtent,
                               duration: const Duration(milliseconds: 500),
@@ -216,20 +232,17 @@ class _HazardDetailPageState extends State<HazardDetailPage> {
                         },
                       ),
                     ),
-                    const Text('YA'),
-                    const SizedBox(width: 50),
-                    SizedBox(
-                      width: 40,
-                      child: Radio(
-                        activeColor: Colors.red,
-                        value: false,
-                        groupValue: _repair,
-                        onChanged: (value) {
-                          setState(() => _repair = false);
-                        },
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ChoiceChip(
+                        selected: _repair == false,
+                        label: const Center(
+                            child: Text('TIDAK, perlu tindak lanjut')),
+                        selectedColor: Colors.red.shade100,
+                        checkmarkColor: Colors.red,
+                        onSelected: (_) => setState(() => _repair = false),
                       ),
                     ),
-                    const Text('TIDAK'),
                   ],
                 ),
               ),
@@ -239,7 +252,7 @@ class _HazardDetailPageState extends State<HazardDetailPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Upload Foto Perbaikan',
+                      'Foto Perbaikan / Tindakan Langsung',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -320,7 +333,7 @@ class _HazardDetailPageState extends State<HazardDetailPage> {
                     if (_image != null) const UploadFiles('HazardDetail2', 0),
                     const SizedBox(height: 15),
                     const Text(
-                      'Keterangan Perbaikan',
+                      'Tindakan Perbaikan Langsung / Rencana Lanjutan',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -353,7 +366,7 @@ class _HazardDetailPageState extends State<HazardDetailPage> {
         bottomNavigationBar: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
           child: buttonApp(
-            label: 'Simpan',
+            label: 'Kirim Laporan Hazard',
             onPressed: (_image == null ||
                     _remark.text == '' ||
                     (_repair == true &&
@@ -377,22 +390,28 @@ class _HazardDetailPageState extends State<HazardDetailPage> {
                           .then((tranId) {
                         if (tranId > 0) {
                           syncTran(_db, _api, 'hazard', tranId).then((sync) {
+                            if (!mounted) return;
                             if (sync == true) {
-                              SnackBarMsg.success(context, 'Berhasil sinkron!');
+                              SnackBarMsg.success(
+                                  this.context, 'Berhasil sinkron!');
                             } else {
-                              SnackBarMsg.danger(context, 'Gagal sinkron!');
+                              SnackBarMsg.danger(
+                                  this.context, 'Gagal sinkron!');
                             }
                           });
                           _db.saveFiles('HazardDetail1', 0, tranId, 0);
                           _db.saveFiles('HazardDetail2', 0, tranId, 0);
-                          alertSuccess(context, Module.hazard, lastId: tranId);
+                          if (!mounted) return;
+                          alertSuccess(this.context, Module.hazard,
+                              lastId: tranId);
                         } else {
-                          alertFailed(context, Module.hazard);
+                          if (!mounted) return;
+                          alertFailed(this.context, Module.hazard);
                         }
                       });
                     } catch (e) {
                       debugPrint(e.toString());
-                      alertFailed(context, Module.hazard);
+                      if (mounted) alertFailed(this.context, Module.hazard);
                     }
                   },
           ),

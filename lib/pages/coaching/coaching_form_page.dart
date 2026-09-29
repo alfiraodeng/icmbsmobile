@@ -11,6 +11,7 @@ import '../../services/database.dart';
 import '../../services/preference.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/button_app.dart';
+import '../../widgets/sap_form_widgets.dart';
 import '../../widgets/top_bar.dart';
 import '../../widgets/upload_files.dart';
 import 'coaching_detail_page.dart';
@@ -119,15 +120,29 @@ class _CoachingFormPageState extends State<CoachingFormPage> {
     return PopScope(
       canPop: false,
       child: Scaffold(
-        appBar: const TopBar(title: 'Coaching', back: 2),
+        appBar: const TopBar(title: 'Coaching & Pembinaan', back: 2),
         body: SingleChildScrollView(
           controller: _scrollCtrl,
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SapFormIntroCard(
+                title: 'Coaching & Pembinaan',
+                subtitle:
+                    'Dokumentasikan sesi pembinaan, sharing knowledge, feedback, dan komitmen bersama.',
+                icon: Icons.record_voice_over_rounded,
+                color: Color(0xFF7C3AED),
+              ),
+              const SapFormSectionTitle(
+                title: 'Waktu & Lokasi Coaching',
+                subtitle:
+                    'Isi tanggal, waktu mulai, area, dan detail lokasi kegiatan.',
+                icon: Icons.event_available_rounded,
+                color: Color(0xFF7C3AED),
+              ),
               const Text(
-                'Tanggal',
+                'Tanggal Kegiatan',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -162,7 +177,7 @@ class _CoachingFormPageState extends State<CoachingFormPage> {
               ),
               const SizedBox(height: 15),
               const Text(
-                'Jam',
+                'Waktu Mulai',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -195,7 +210,7 @@ class _CoachingFormPageState extends State<CoachingFormPage> {
               ),
               const SizedBox(height: 15),
               const Text(
-                'Area',
+                'Area Utama',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -238,7 +253,7 @@ class _CoachingFormPageState extends State<CoachingFormPage> {
               ),
               const SizedBox(height: 15),
               const Text(
-                'Lokasi',
+                'Detail Lokasi / Benchmark',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -281,7 +296,7 @@ class _CoachingFormPageState extends State<CoachingFormPage> {
               ),
               const SizedBox(height: 15),
               const Text(
-                'Lokasi Detail',
+                'Lokasi Spesifik',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -304,6 +319,13 @@ class _CoachingFormPageState extends State<CoachingFormPage> {
                 onChanged: (String val) => setState(() {}),
               ),
               const SizedBox(height: 15),
+              const SapFormSectionTitle(
+                title: 'Materi & Evidence Coaching',
+                subtitle:
+                    'Pilih tema, isi judul, feedback/komitmen, lalu unggah foto kegiatan.',
+                icon: Icons.menu_book_rounded,
+                color: Color(0xFF7C3AED),
+              ),
               const Text(
                 'Tema Coaching',
                 style: TextStyle(
@@ -348,7 +370,7 @@ class _CoachingFormPageState extends State<CoachingFormPage> {
               ),
               const SizedBox(height: 15),
               const Text(
-                'Judul Coaching',
+                'Judul / Topik Coaching',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -372,7 +394,7 @@ class _CoachingFormPageState extends State<CoachingFormPage> {
               ),
               const SizedBox(height: 15),
               const Text(
-                'Feedback dan Komitmen',
+                'Umpan Balik (Feedback) & Komitmen Bersama',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -398,7 +420,7 @@ class _CoachingFormPageState extends State<CoachingFormPage> {
               ),
               const SizedBox(height: 15),
               const Text(
-                'Upload Foto',
+                'Foto Kegiatan Coaching',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -465,7 +487,7 @@ class _CoachingFormPageState extends State<CoachingFormPage> {
                             ),
                             SizedBox(height: 5),
                             Text(
-                              'Upload Foto',
+                              'Foto Kegiatan Coaching',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w400,
