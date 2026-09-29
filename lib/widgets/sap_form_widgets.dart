@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+
+import 'snackbar_msg.dart';
 
 class SapFormIntroCard extends StatelessWidget {
   const SapFormIntroCard({
@@ -145,4 +148,67 @@ class SapFormSectionTitle extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> fillGpsCoordinate(
+  BuildContext context,
+  TextEditingController controller,
+  VoidCallback onChanged, {
+  bool silent = false,
+}) async {
+  try {
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      if (!silent && context.mounted) {
+        SnackBarMsg.danger(
+          context,
+          'Aktifkan izin lokasi untuk mengambil koordinat GPS.',
+        );
+      }
+      return;
+    }
+
+    final position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+    controller.text =
+        '${position.latitude.toStringAsFixed(6)}, ${position.longitude.toStringAsFixed(6)}';
+    onChanged();
+    if (!silent && context.mounted) {
+      SnackBarMsg.success(context, 'Koordinat GPS berhasil diambil.');
+    }
+  } catch (e) {
+    if (!silent && context.mounted) {
+      SnackBarMsg.danger(context, 'Gagal mengambil lokasi GPS.');
+    }
+  }
+}
+
+InputDecoration gpsInputDecoration({
+  required BuildContext context,
+  required VoidCallback onPressed,
+  Color iconColor = const Color(0xFF4F46E5),
+}) {
+  return InputDecoration(
+    hintText: 'Klik ikon lokasi untuk ambil koordinat GPS otomatis',
+    prefixIcon: Padding(
+      padding: const EdgeInsets.only(left: 10),
+      child: Icon(
+        Icons.location_on,
+        size: 24,
+        color: iconColor,
+      ),
+    ),
+    suffixIcon: IconButton(
+      tooltip: 'Ambil Lokasi Aktual GPS',
+      icon: const Icon(Icons.my_location_rounded),
+      color: Theme.of(context).colorScheme.primary,
+      onPressed: onPressed,
+    ),
+  );
 }

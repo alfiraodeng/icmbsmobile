@@ -53,6 +53,7 @@ class _HazardFormPageState extends State<HazardFormPage> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fillGpsFromDevice(silent: true);
       _db.rawQuery('''select
         hm.id id_kategori_bahaya,
         hm."name" kategori_bahaya
@@ -140,6 +141,15 @@ class _HazardFormPageState extends State<HazardFormPage> {
     /** */
 
     super.dispose();
+  }
+
+  void _fillGpsFromDevice({bool silent = false}) {
+    fillGpsCoordinate(
+      context,
+      _locationDetail,
+      () => setState(() {}),
+      silent: silent,
+    );
   }
 
   void _getSubtype(int val) {
@@ -562,15 +572,10 @@ class _HazardFormPageState extends State<HazardFormPage> {
               const SizedBox(height: 10),
               TextFormField(
                 controller: _locationDetail,
-                decoration: InputDecoration(
-                  prefixIcon: Padding(
-                    padding: const EdgeInsets.only(left: 10),
-                    child: Icon(
-                      Icons.location_on,
-                      size: 24,
-                      color: Colors.indigo.shade400,
-                    ),
-                  ),
+                decoration: gpsInputDecoration(
+                  context: context,
+                  onPressed: () => _fillGpsFromDevice(),
+                  iconColor: Colors.indigo.shade400,
                 ),
                 style: const TextStyle(fontSize: 16),
                 onChanged: (String val) => setState(() {}),
