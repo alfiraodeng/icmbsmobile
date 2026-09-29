@@ -139,7 +139,7 @@ List<LinkMenuModel> listMenuExtra = <LinkMenuModel>[
     opacity: 1,
   ),
   LinkMenuModel(
-    title: 'Insiden\nInformation',
+    title: 'Informasi\nInsiden',
     icon: Icons.newspaper_rounded,
     image: '',
     route: '/sap_incident_information',

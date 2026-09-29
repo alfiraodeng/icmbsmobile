@@ -83,44 +83,196 @@ class SapLeaguePage extends StatelessWidget {
 class IncidentInformationPage extends StatelessWidget {
   const IncidentInformationPage({super.key});
 
+  static const _incidents = [
+    IncidentArticle(
+      imageUrl:
+          'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=900&q=80',
+      category: 'High Potential Incident',
+      title: 'Material loose ditemukan di hauling road KM 4',
+      caption:
+          'Tim operasi memasang rambu sementara dan melakukan pembersihan jalur. Tidak ada korban dalam kejadian ini.',
+      date: '29 Sep 2026',
+      location: 'Hauling Road KM 4',
+      reporter: 'Operation Team',
+      severity: 'High Potential',
+      body: [
+        'Pada pemeriksaan awal shift pagi, tim operasi menemukan material loose di sisi kiri hauling road KM 4. Kondisi tersebut berpotensi mengenai unit yang melintas apabila terkena getaran atau hujan intensitas tinggi.',
+        'Area kemudian diamankan menggunakan traffic cone dan rambu sementara. Dispatcher mengalihkan lajur unit berat ke sisi aman sampai proses pembersihan dan pemeriksaan slope selesai dilakukan.',
+        'Tindak lanjut yang direkomendasikan adalah inspeksi ulang setelah hujan, penambahan patrol road maintenance pada jam kritis, dan briefing kepada operator terkait pelaporan dini kondisi jalan tidak normal.',
+      ],
+    ),
+    IncidentArticle(
+      imageUrl:
+          'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=900&q=80',
+      category: 'Property Damage',
+      title: 'Kontak ringan unit LV dengan pembatas area workshop',
+      caption:
+          'Investigasi awal menunjukkan blind spot saat manuver mundur. Refreshment defensive driving dijadwalkan pekan ini.',
+      date: '28 Sep 2026',
+      location: 'Workshop Light Vehicle',
+      reporter: 'Plant Department',
+      severity: 'Medium',
+      body: [
+        'Satu unit light vehicle mengalami kontak ringan dengan pembatas area workshop saat melakukan manuver mundur. Tidak terdapat cedera personel, namun terdapat kerusakan minor pada bumper belakang dan pembatas portable.',
+        'Hasil review awal menunjukkan spotter belum berada pada posisi optimal dan driver tidak melakukan stop-look-wave secara lengkap sebelum kendaraan bergerak mundur.',
+        'Action sementara meliputi pemasangan marka parkir tambahan, refreshment defensive driving, dan penegasan kembali penggunaan spotter pada area padat aktivitas.',
+      ],
+    ),
+    IncidentArticle(
+      imageUrl:
+          'https://images.unsplash.com/photo-1590496793929-36417d3117de?auto=format&fit=crop&w=900&q=80',
+      category: 'Safety Alert',
+      title: 'Debu meningkat pada area crusher saat shift siang',
+      caption:
+          'Pengendalian sementara dilakukan melalui water spray tambahan dan inspeksi ulang penggunaan respirator.',
+      date: '27 Sep 2026',
+      location: 'Crusher Area',
+      reporter: 'HSE Patrol',
+      severity: 'Safety Alert',
+      body: [
+        'Tim HSE mencatat peningkatan paparan debu pada area crusher ketika aktivitas dumping meningkat pada shift siang. Visibility masih dalam batas operasi, namun beberapa pekerja terlihat perlu menyesuaikan respirator.',
+        'Supervisor area mengaktifkan water spray tambahan dan mengatur jeda dumping agar debu tidak terkonsentrasi di satu titik. Pemeriksaan singkat dilakukan pada respirator pekerja dan kondisi filter.',
+        'Rekomendasi lanjutan adalah verifikasi efektivitas water spray, inspeksi nozzle, dan komunikasi rutin kepada pekerja mengenai penggunaan respirator pada kondisi berdebu.',
+      ],
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
-    return const _MockScaffold(
-      title: 'Insiden Information',
+    return _MockScaffold(
+      title: 'Informasi Insiden',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _NewsCard(
-            imageUrl:
-                'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=900&q=80',
-            category: 'High Potential Incident',
-            title: 'Material loose ditemukan di hauling road KM 4',
-            caption:
-                'Tim operasi memasang rambu sementara dan melakukan pembersihan jalur. Tidak ada korban dalam kejadian ini.',
-            date: '29 Sep 2026',
-          ),
-          _NewsCard(
-            imageUrl:
-                'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=900&q=80',
-            category: 'Property Damage',
-            title: 'Kontak ringan unit LV dengan pembatas area workshop',
-            caption:
-                'Investigasi awal menunjukkan blind spot saat manuver mundur. Refreshment defensive driving dijadwalkan pekan ini.',
-            date: '28 Sep 2026',
-          ),
-          _NewsCard(
-            imageUrl:
-                'https://images.unsplash.com/photo-1518709268805-4e9042af2176?auto=format&fit=crop&w=900&q=80',
-            category: 'Safety Alert',
-            title: 'Debu meningkat pada area crusher saat shift siang',
-            caption:
-                'Pengendalian sementara dilakukan melalui water spray tambahan dan inspeksi ulang penggunaan respirator.',
-            date: '27 Sep 2026',
-          ),
+          const _SectionTitle('Berita Insiden Terbaru'),
+          ..._incidents.map((incident) => _NewsCard(article: incident)),
         ],
       ),
     );
   }
+}
+
+class IncidentArticleDetailPage extends StatelessWidget {
+  const IncidentArticleDetailPage({required this.article, super.key});
+
+  final IncidentArticle article;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: const TopBar(title: 'Informasi Insiden'),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _IncidentImage(
+              imageUrl: article.imageUrl,
+              height: 240,
+              borderRadius: BorderRadius.zero,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _InfoChip(label: article.category, icon: Icons.article),
+                      _InfoChip(label: article.date, icon: Icons.event),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    article.title,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      height: 1.16,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    article.caption,
+                    style: TextStyle(
+                      color: Colors.blueGrey.shade700,
+                      fontSize: 15,
+                      height: 1.45,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  _SurfaceCard(
+                    child: Column(
+                      children: [
+                        _ArticleMetaRow(
+                          icon: Icons.place_rounded,
+                          label: 'Lokasi',
+                          value: article.location,
+                        ),
+                        const Divider(height: 18),
+                        _ArticleMetaRow(
+                          icon: Icons.person_rounded,
+                          label: 'Pelapor',
+                          value: article.reporter,
+                        ),
+                        const Divider(height: 18),
+                        _ArticleMetaRow(
+                          icon: Icons.warning_amber_rounded,
+                          label: 'Klasifikasi',
+                          value: article.severity,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const _SectionTitle('Kronologi & Tindak Lanjut'),
+                  ...article.body.map(
+                    (paragraph) => Padding(
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: Text(
+                        paragraph,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          height: 1.55,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class IncidentArticle {
+  const IncidentArticle({
+    required this.imageUrl,
+    required this.category,
+    required this.title,
+    required this.caption,
+    required this.date,
+    required this.location,
+    required this.reporter,
+    required this.severity,
+    required this.body,
+  });
+
+  final String imageUrl;
+  final String category;
+  final String title;
+  final String caption;
+  final String date;
+  final String location;
+  final String reporter;
+  final String severity;
+  final List<String> body;
 }
 
 class WorkRosterPage extends StatefulWidget {
@@ -575,19 +727,9 @@ class _LeagueTile extends StatelessWidget {
 }
 
 class _NewsCard extends StatelessWidget {
-  const _NewsCard({
-    required this.imageUrl,
-    required this.category,
-    required this.title,
-    required this.caption,
-    required this.date,
-  });
+  const _NewsCard({required this.article});
 
-  final String imageUrl;
-  final String category;
-  final String title;
-  final String caption;
-  final String date;
+  final IncidentArticle article;
 
   @override
   Widget build(BuildContext context) {
@@ -598,35 +740,169 @@ class _NewsCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Image.network(imageUrl,
-              height: 150, width: double.infinity, fit: BoxFit.cover),
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('$category  |  $date',
-                    style: TextStyle(
-                        color: Colors.blueGrey.shade600,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                Text(title,
-                    style: const TextStyle(
-                        fontSize: 17, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 8),
-                Text(caption,
-                    style:
-                        const TextStyle(color: Colors.black87, height: 1.35)),
-              ],
-            ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: .04),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => IncidentArticleDetailPage(article: article),
+            ),
+          );
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _IncidentImage(imageUrl: article.imageUrl, height: 150),
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('${article.category}  |  ${article.date}',
+                      style: TextStyle(
+                          color: Colors.blueGrey.shade600,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  Text(article.title,
+                      style: const TextStyle(
+                          fontSize: 17, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 8),
+                  Text(article.caption,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                          const TextStyle(color: Colors.black87, height: 1.35)),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Baca detail',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _IncidentImage extends StatelessWidget {
+  const _IncidentImage({
+    required this.imageUrl,
+    required this.height,
+    this.borderRadius = const BorderRadius.vertical(top: Radius.circular(18)),
+  });
+
+  final String imageUrl;
+  final double height;
+  final BorderRadius borderRadius;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: borderRadius,
+      child: Image.network(
+        imageUrl,
+        height: height,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            height: height,
+            width: double.infinity,
+            color: Colors.indigo.shade50,
+            child: Icon(
+              Icons.image_not_supported_rounded,
+              color: Colors.indigo.shade200,
+              size: 46,
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  const _InfoChip({required this.label, required this.icon});
+
+  final String label;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      visualDensity: VisualDensity.compact,
+      avatar: Icon(icon, size: 16, color: Colors.indigo),
+      label: Text(label),
+      backgroundColor: Colors.indigo.shade50,
+      side: BorderSide(color: Colors.indigo.shade100),
+    );
+  }
+}
+
+class _ArticleMetaRow extends StatelessWidget {
+  const _ArticleMetaRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: Colors.indigo, size: 20),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.blueGrey.shade600,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
