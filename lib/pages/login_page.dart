@@ -134,16 +134,10 @@ class _LoginPageState extends State<LoginPage> {
                     const Center(
                       child: Image(
                         image: AssetImage('assets/images/logo-mbs.png'),
-                        width: 130,
+                        width: 190,
                       ),
                     ),
-                    const Center(
-                      child: Image(
-                        image: AssetImage('assets/images/indexsafe-slogan.png'),
-                        width: 180,
-                      ),
-                    ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 34),
                     const Text(
                       'Halo Semangat Pagi!',
                       style: TextStyle(
