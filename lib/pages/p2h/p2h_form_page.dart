@@ -327,12 +327,14 @@ class _P2HFormPageState extends State<P2HFormPage> {
                       },
                     ),
                   ),
-                  const SizedBox(width: 5),
-                  const Text(
-                    'Apakah Anda memiliki SIMPER / KIMPER ?',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Apakah Anda memiliki SIMPER / KIMPER ?',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
