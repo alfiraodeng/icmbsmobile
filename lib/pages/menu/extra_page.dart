@@ -29,7 +29,7 @@ class _ExtraPageState extends State<ExtraPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const TopBar(title: 'Extra\'s'),
+      appBar: const TopBar(title: 'Performance Hub'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: GridView.builder(
@@ -52,13 +52,24 @@ class _ExtraPageState extends State<ExtraPage> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Image.asset(
-                      listMenuExtra[index].image.toString(),
-                      fit: BoxFit.fitWidth,
-                      height: 30,
-                      opacity:
-                          AlwaysStoppedAnimation(listMenuExtra[index].opacity),
-                    ),
+                    if (listMenuExtra[index].image.isNotEmpty)
+                      Image.asset(
+                        listMenuExtra[index].image,
+                        fit: BoxFit.fitWidth,
+                        height: 30,
+                        opacity: AlwaysStoppedAnimation(
+                          listMenuExtra[index].opacity,
+                        ),
+                      )
+                    else
+                      Opacity(
+                        opacity: listMenuExtra[index].opacity,
+                        child: Icon(
+                          listMenuExtra[index].icon,
+                          size: 34,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
                     const SizedBox(height: 8),
                     Text(
                       listMenuExtra[index].title,

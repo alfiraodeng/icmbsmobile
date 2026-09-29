@@ -259,7 +259,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                           const SizedBox(height: 3),
                           const Text(
-                            'Extra\'s',
+                            'Performance\nHub',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,

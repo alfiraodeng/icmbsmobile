@@ -74,6 +74,28 @@ List<LinkMenuModel> listMenuSap = <LinkMenuModel>[
     route: '/coaching',
     opacity: 1,
   ),
+];
+
+List<LinkMenuModel> listMenuOhs1 = <LinkMenuModel>[
+  LinkMenuModel(
+    title: 'P2H',
+    icon: Icons.car_repair_rounded,
+    image: 'assets/icons/extra-03.png',
+    route: '/p2h',
+    opacity: 1,
+  ),
+  LinkMenuModel(
+    title: 'DPA',
+    icon: Icons.drive_eta_rounded,
+    image: '',
+    route: '/dpa',
+    opacity: 1,
+  ),
+];
+
+List<LinkMenuModel> listMenuOhs2 = <LinkMenuModel>[];
+
+List<LinkMenuModel> listMenuExtra = <LinkMenuModel>[
   LinkMenuModel(
     title: 'Pencapaian\nSAP',
     icon: Icons.track_changes_rounded,
@@ -82,24 +104,24 @@ List<LinkMenuModel> listMenuSap = <LinkMenuModel>[
     opacity: 1,
   ),
   LinkMenuModel(
-    title: 'Klasemen\nLeague',
+    title: 'Klasemen\nLeague SAP',
     icon: Icons.emoji_events_rounded,
     image: '',
     route: '/sap_league',
     opacity: 1,
   ),
   LinkMenuModel(
-    title: 'Action Plan',
-    icon: Icons.assignment_turned_in_rounded,
+    title: 'Insiden\nInformation',
+    icon: Icons.newspaper_rounded,
     image: '',
-    route: '/sap_action_plan',
+    route: '/sap_incident_information',
     opacity: 1,
   ),
   LinkMenuModel(
-    title: 'Insiden\nInformation',
-    icon: Icons.report_problem_rounded,
+    title: 'Roster Kerja',
+    icon: Icons.calendar_month_rounded,
     image: '',
-    route: '/sap_incident_information',
+    route: '/sap_work_roster',
     opacity: 1,
   ),
   LinkMenuModel(
@@ -110,61 +132,10 @@ List<LinkMenuModel> listMenuSap = <LinkMenuModel>[
     opacity: 1,
   ),
   LinkMenuModel(
-    title: 'Roster Kerja\nSAP',
-    icon: Icons.calendar_month_rounded,
+    title: 'Action\nTracker',
+    icon: Icons.assignment_turned_in_rounded,
     image: '',
-    route: '/sap_work_roster',
-    opacity: 1,
-  ),
-];
-
-List<LinkMenuModel> listMenuOhs1 = <LinkMenuModel>[
-  LinkMenuModel(
-    title: 'Management\nInspection',
-    icon: Icons.manage_search_sharp,
-    image: 'assets/icons/ohs-01.png',
-    route: '/management_inspection',
-    opacity: 1,
-  ),
-  LinkMenuModel(
-    title: 'Daily\nInspection',
-    icon: Icons.manage_search_sharp,
-    image: 'assets/icons/ohs-02.png',
-    route: '/daily_inspection',
-    opacity: 1,
-  ),
-  LinkMenuModel(
-    title: 'Fit to Work\nP5M',
-    icon: Icons.hail_rounded,
-    image: 'assets/icons/ohs-03.png',
-    route: '/p5m',
-    opacity: 1,
-  ),
-];
-
-List<LinkMenuModel> listMenuOhs2 = <LinkMenuModel>[
-  LinkMenuModel(
-    title: 'Weekly\nInspection',
-    icon: Icons.warning_amber_rounded,
-    image: 'assets/icons/ohs-02.png',
-    route: '/weekly_inspection',
-    opacity: 1,
-  ),
-  LinkMenuModel(
-    title: 'SiMaMa',
-    icon: Icons.hail_rounded,
-    image: 'assets/icons/ohs-01.png',
-    route: '/simama',
-    opacity: 1,
-  ),
-];
-
-List<LinkMenuModel> listMenuExtra = <LinkMenuModel>[
-  LinkMenuModel(
-    title: 'Prestart Check\n P2H',
-    icon: Icons.hail_rounded,
-    image: 'assets/icons/extra-03.png',
-    route: '/p2h',
+    route: '/sap_action_plan',
     opacity: 1,
   ),
 ];

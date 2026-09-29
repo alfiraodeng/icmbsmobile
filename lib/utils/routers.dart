@@ -17,6 +17,7 @@ import '../pages/p2h/p2h_form_page.dart';
 import '../pages/p2h/p2h_page.dart';
 import '../pages/p5m/p5m_form_page.dart';
 import '../pages/p5m/p5m_page.dart';
+import '../pages/performance/performance_hub_pages.dart';
 import '../pages/safetytalk/safetytalk_form_page.dart';
 import '../pages/safetytalk/safetytalk_page.dart';
 import '../pages/sap_report_page.dart';
@@ -33,18 +34,59 @@ void routePage(BuildContext ctx, String route, {String? title}) {
       ),
     );
   }
-  if ({
-    '/sap_achievement',
-    '/sap_league',
-    '/sap_action_plan',
-    '/sap_incident_information',
-    '/sap_quality',
-    '/sap_work_roster',
-  }.contains(route)) {
+  if (route == '/sap_achievement') {
     Navigator.push(
       ctx,
       MaterialPageRoute(
-        builder: (context) => ComingSoonPage(title),
+        builder: (context) => const AchievementSapPage(),
+      ),
+    );
+  }
+  if (route == '/sap_league') {
+    Navigator.push(
+      ctx,
+      MaterialPageRoute(
+        builder: (context) => const SapLeaguePage(),
+      ),
+    );
+  }
+  if (route == '/sap_action_plan') {
+    Navigator.push(
+      ctx,
+      MaterialPageRoute(
+        builder: (context) => const ActionTrackerPage(),
+      ),
+    );
+  }
+  if (route == '/sap_incident_information') {
+    Navigator.push(
+      ctx,
+      MaterialPageRoute(
+        builder: (context) => const IncidentInformationPage(),
+      ),
+    );
+  }
+  if (route == '/sap_quality') {
+    Navigator.push(
+      ctx,
+      MaterialPageRoute(
+        builder: (context) => const SapQualityPage(),
+      ),
+    );
+  }
+  if (route == '/sap_work_roster') {
+    Navigator.push(
+      ctx,
+      MaterialPageRoute(
+        builder: (context) => const WorkRosterPage(),
+      ),
+    );
+  }
+  if (route == '/dpa') {
+    Navigator.push(
+      ctx,
+      MaterialPageRoute(
+        builder: (context) => const DriverPerformanceAssessmentPage(),
       ),
     );
   }

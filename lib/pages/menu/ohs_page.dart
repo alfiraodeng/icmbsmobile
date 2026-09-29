@@ -12,8 +12,6 @@ class OhsPage extends StatefulWidget {
 }
 
 class _OhsPageState extends State<OhsPage> {
-  bool _isParent = true;
-
   @override
   void initState() {
     super.initState();
@@ -34,105 +32,67 @@ class _OhsPageState extends State<OhsPage> {
       appBar: const TopBar(title: 'OHS Program'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
-        child: (_isParent)
-            ? GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
-                ),
-                itemCount: listMenuOhs1.length,
-                itemBuilder: (context, index) {
-                  return InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    splashColor: Colors.blueAccent,
-                    child: Card(
-                      elevation: 2,
-                      color: Colors.white,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset(
-                            listMenuOhs1[index].image.toString(),
-                            fit: BoxFit.fitWidth,
-                            height: 30,
-                            opacity: AlwaysStoppedAnimation(
-                                listMenuOhs1[index].opacity),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            listMenuOhs1[index].title,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.black87,
-                              fontWeight: FontWeight.w400,
-                            ),
-                            textAlign: TextAlign.center,
-                          )
-                        ],
+        child: GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+          ),
+          itemCount: listMenuOhs1.length,
+          itemBuilder: (context, index) {
+            return InkWell(
+              borderRadius: BorderRadius.circular(12),
+              splashColor: Colors.blueAccent,
+              child: Card(
+                elevation: 2,
+                color: Colors.white,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (listMenuOhs1[index].image.isNotEmpty)
+                      Image.asset(
+                        listMenuOhs1[index].image,
+                        fit: BoxFit.fitWidth,
+                        height: 30,
+                        opacity: AlwaysStoppedAnimation(
+                          listMenuOhs1[index].opacity,
+                        ),
+                      )
+                    else
+                      Opacity(
+                        opacity: listMenuOhs1[index].opacity,
+                        child: Icon(
+                          listMenuOhs1[index].icon,
+                          size: 34,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                       ),
-                    ),
-                    onTap: () {
-                      if (index == 0) {
-                        setState(() => _isParent = false);
-                        return;
-                      }
-
-                      routePage(context, listMenuOhs1[index].route,
-                          title: listMenuOhs1[index].title);
-                    },
-                  );
-                },
-              )
-            : GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
-                ),
-                itemCount: listMenuOhs2.length,
-                itemBuilder: (context, index) {
-                  return InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    splashColor: Colors.blueAccent,
-                    child: Card(
-                      elevation: 2,
-                      color: Colors.white,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset(
-                            listMenuOhs2[index].image.toString(),
-                            fit: BoxFit.fitWidth,
-                            height: 30,
-                            opacity: AlwaysStoppedAnimation(
-                                listMenuOhs2[index].opacity),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            listMenuOhs2[index].title,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.black87,
-                              fontWeight: FontWeight.w400,
-                            ),
-                            textAlign: TextAlign.center,
-                          )
-                        ],
+                    const SizedBox(height: 8),
+                    Text(
+                      listMenuOhs1[index].title,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w400,
                       ),
-                    ),
-                    onTap: () {
-                      routePage(context, listMenuOhs2[index].route);
-                    },
-                  );
-                },
+                      textAlign: TextAlign.center,
+                    )
+                  ],
+                ),
               ),
+              onTap: () {
+                routePage(
+                  context,
+                  listMenuOhs1[index].route,
+                  title: listMenuOhs1[index].title,
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
