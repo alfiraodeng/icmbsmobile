@@ -152,6 +152,21 @@ class _HazardFormPageState extends State<HazardFormPage> {
     );
   }
 
+  Future<void> _addCustomLocation() async {
+    final item = await showAddCustomLocationDialog(
+      context: context,
+      db: _db,
+      areaId: _areaId,
+    );
+    if (item == null) return;
+    setState(() {
+      _locationList.add(item);
+      _locationList.sort((a, b) => a.value.compareTo(b.value));
+      _locationId = item.key;
+      _locationDetail.text = item.value;
+    });
+  }
+
   void _getSubtype(int val) {
     _typeId = val;
     _subtypeId = null;
@@ -561,6 +576,7 @@ class _HazardFormPageState extends State<HazardFormPage> {
                   });
                 },
               ),
+              AddCustomLocationButton(onPressed: _addCustomLocation),
               const SizedBox(height: 15),
               const Text(
                 'Lokasi Spesifik',

@@ -15,6 +15,7 @@ import '../../utils/enums.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/alert_app.dart';
 import '../../widgets/button_app.dart';
+import '../../widgets/sap_form_widgets.dart';
 import '../../widgets/snackbar_msg.dart';
 import '../../widgets/top_bar.dart';
 import '../../widgets/upload_files.dart';
@@ -52,6 +53,7 @@ class _SafetyTalkFormPageState extends State<SafetyTalkFormPage> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fillGpsFromDevice(silent: true);
       _db.rawQuery('''select
         me.id id_area,
         me."name" area,
@@ -79,6 +81,30 @@ class _SafetyTalkFormPageState extends State<SafetyTalkFormPage> {
     /** */
 
     super.dispose();
+  }
+
+  Future<void> _fillGpsFromDevice({bool silent = false}) {
+    return fillGpsCoordinate(
+      context,
+      _locationDetail,
+      () => setState(() {}),
+      silent: silent,
+    );
+  }
+
+  Future<void> _addCustomLocation() async {
+    final item = await showAddCustomLocationDialog(
+      context: context,
+      db: _db,
+      areaId: _areaId,
+    );
+    if (item == null) return;
+    setState(() {
+      _locationList.add(item);
+      _locationList.sort((a, b) => a.value.compareTo(b.value));
+      _locationId = item.key;
+      _locationDetail.text = item.value;
+    });
   }
 
   void _getLocation(int val) {
@@ -262,6 +288,7 @@ class _SafetyTalkFormPageState extends State<SafetyTalkFormPage> {
                   });
                 },
               ),
+              AddCustomLocationButton(onPressed: _addCustomLocation),
               const SizedBox(height: 15),
               const Text(
                 'Lokasi Detail',
@@ -273,15 +300,10 @@ class _SafetyTalkFormPageState extends State<SafetyTalkFormPage> {
               const SizedBox(height: 10),
               TextFormField(
                 controller: _locationDetail,
-                decoration: InputDecoration(
-                  prefixIcon: Padding(
-                    padding: const EdgeInsets.only(left: 10),
-                    child: Icon(
-                      Icons.location_on,
-                      size: 24,
-                      color: Colors.indigo.shade400,
-                    ),
-                  ),
+                decoration: gpsInputDecoration(
+                  context: context,
+                  onPressed: _fillGpsFromDevice,
+                  iconColor: Colors.indigo.shade400,
                 ),
                 style: const TextStyle(fontSize: 16),
                 onChanged: (String val) => setState(() {}),
@@ -674,20 +696,27 @@ class _SafetyTalkFormPageState extends State<SafetyTalkFormPage> {
                       _db.insert('safety_trans', data.toJson()).then((tranId) {
                         if (tranId > 0) {
                           syncTran(_db, _api, 'safety', tranId).then((sync) {
+                            if (!mounted) return;
                             if (sync == true) {
-                              SnackBarMsg.success(context, 'Berhasil sinkron!');
+                              SnackBarMsg.success(
+                                  this.context, 'Berhasil sinkron!');
                             } else {
-                              SnackBarMsg.danger(context, 'Gagal sinkron!');
+                              SnackBarMsg.danger(
+                                  this.context, 'Gagal sinkron!');
                             }
                           });
-                          alertSuccess(context, Module.safety, lastId: tranId);
+                          if (!mounted) return;
+                          alertSuccess(this.context, Module.safety,
+                              lastId: tranId);
                         } else {
-                          alertFailed(context, Module.safety);
+                          if (!mounted) return;
+                          alertFailed(this.context, Module.safety);
                         }
                       });
                     } catch (e) {
                       debugPrint(e.toString());
-                      alertFailed(context, Module.safety);
+                      if (!mounted) return;
+                      alertFailed(this.context, Module.safety);
                     }
                   },
           ),

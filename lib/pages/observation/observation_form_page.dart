@@ -148,6 +148,21 @@ class _ObservationFormPageState extends State<ObservationFormPage> {
     );
   }
 
+  Future<void> _addCustomLocation() async {
+    final item = await showAddCustomLocationDialog(
+      context: context,
+      db: _db,
+      areaId: _areaId,
+    );
+    if (item == null) return;
+    setState(() {
+      _locationList.add(item);
+      _locationList.sort((a, b) => a.value.compareTo(b.value));
+      _locationId = item.key;
+      _locationDetail.text = item.value;
+    });
+  }
+
   void _getLocation(int val) {
     _areaId = val;
     _locationId = null;
@@ -348,6 +363,7 @@ class _ObservationFormPageState extends State<ObservationFormPage> {
                   });
                 },
               ),
+              AddCustomLocationButton(onPressed: _addCustomLocation),
               const SizedBox(height: 15),
               const Text(
                 'Lokasi Spesifik',

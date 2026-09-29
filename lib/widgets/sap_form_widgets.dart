@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../services/database.dart';
 import 'snackbar_msg.dart';
 
 class SapFormIntroCard extends StatelessWidget {
@@ -211,4 +212,99 @@ InputDecoration gpsInputDecoration({
       onPressed: onPressed,
     ),
   );
+}
+
+Future<MapEntry<int, String>?> showAddCustomLocationDialog({
+  required BuildContext context,
+  required DatabaseService db,
+  required int? areaId,
+}) async {
+  if (areaId == null) {
+    SnackBarMsg.warning(context, 'Pilih Area Utama terlebih dahulu.');
+    return null;
+  }
+
+  final controller = TextEditingController();
+  final result = await showDialog<MapEntry<int, String>>(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: const Text('Tambah Lokasi Custom'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Gunakan fitur ini jika benchmark/detail lokasi belum tersedia di list.',
+              style: TextStyle(fontSize: 12, color: Colors.black54),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: controller,
+              autofocus: true,
+              textCapitalization: TextCapitalization.characters,
+              decoration: const InputDecoration(
+                labelText: 'Nama Lokasi / Benchmark',
+                hintText: 'Contoh: Workshop Mitra KM 12',
+                prefixIcon: Icon(Icons.add_location_alt_rounded),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Batal'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final name = controller.text.trim();
+              if (name.isEmpty) return;
+              final id = -DateTime.now().millisecondsSinceEpoch;
+              await db.insert('enum_masters', {
+                'id': id,
+                'code': 'CUSTOM-$id',
+                'name': name,
+                'type': 'location',
+                'flag': 'custom-mobile',
+                'ref_id': areaId,
+                'created_at': DateTime.now().toString(),
+                'updated_at': DateTime.now().toString(),
+              });
+              if (dialogContext.mounted) {
+                Navigator.pop(dialogContext, MapEntry(id, name));
+              }
+            },
+            child: const Text('Simpan'),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (result != null && context.mounted) {
+    SnackBarMsg.success(context, 'Lokasi custom berhasil ditambahkan.');
+  }
+  return result;
+}
+
+class AddCustomLocationButton extends StatelessWidget {
+  const AddCustomLocationButton({
+    required this.onPressed,
+    super.key,
+  });
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: TextButton.icon(
+        onPressed: onPressed,
+        icon: const Icon(Icons.add_location_alt_rounded, size: 18),
+        label: const Text('Tambah Lokasi Custom'),
+      ),
+    );
+  }
 }

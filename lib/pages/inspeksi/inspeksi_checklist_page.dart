@@ -86,6 +86,132 @@ class _InspeksiChecklistPageState extends State<InspeksiChecklistPage> {
     super.dispose();
   }
 
+  Future<void> _addCustomQuestion() async {
+    final questionCtrl = TextEditingController();
+    final optionsCtrl =
+        TextEditingController(text: 'Baik, Perlu Perbaikan, N/A');
+    var answerType = 'yesno';
+
+    final item = await showDialog<InspectDetailModel>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Tambah Pertanyaan Inspeksi'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Buat checkpoint sendiri jika list inspeksi belum mengakomodir kondisi lapangan.',
+                      style: TextStyle(fontSize: 12, color: Colors.black54),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: questionCtrl,
+                      minLines: 2,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: 'Pertanyaan / Checkpoint',
+                        hintText:
+                            'Contoh: Apakah akses kerja mitra sudah aman?',
+                        prefixIcon: Icon(Icons.help_outline_rounded),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    DropdownButtonFormField<String>(
+                      initialValue: answerType,
+                      decoration: const InputDecoration(
+                        labelText: 'Jenis Jawaban',
+                        prefixIcon: Icon(Icons.tune_rounded),
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'yesno',
+                          child: Text('YA / TIDAK / N/A'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'text',
+                          child: Text('Free Text'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'radio_custom',
+                          child: Text('Radio Custom'),
+                        ),
+                      ],
+                      onChanged: (value) => setDialogState(
+                        () => answerType = value ?? answerType,
+                      ),
+                    ),
+                    if (answerType == 'radio_custom') ...[
+                      const SizedBox(height: 14),
+                      TextFormField(
+                        controller: optionsCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Pilihan Jawaban',
+                          hintText: 'Pisahkan dengan koma',
+                          prefixIcon: Icon(Icons.format_list_bulleted_rounded),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Batal'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    final question = questionCtrl.text.trim();
+                    if (question.isEmpty) return;
+                    Navigator.pop(
+                      dialogContext,
+                      InspectDetailModel(
+                        pointId: -DateTime.now().millisecondsSinceEpoch,
+                        name: question,
+                        type: answerType,
+                        flag: answerType == 'radio_custom'
+                            ? optionsCtrl.text.trim()
+                            : 'custom-mobile',
+                        image: '',
+                        remark: '',
+                        repair: 0,
+                        repairImage: '',
+                        repairRemark: '',
+                      ),
+                    );
+                  },
+                  child: const Text('Tambah'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (item == null) return;
+    setState(() => _checkList.add(item));
+  }
+
+  String _answerSummary(InspectDetailModel item) {
+    if (item.type == 'text') {
+      final answer = (item.remark ?? '').trim();
+      return answer.isEmpty ? 'Jawab: belum diisi' : 'Jawab: $answer';
+    }
+
+    if (item.type == 'radio_custom') {
+      final answer = (item.remark ?? '').trim();
+      return answer.isEmpty ? 'Jawab: belum dipilih' : 'Jawab: $answer';
+    }
+
+    return 'Jawab: ${item.yesno == null ? '' : globals.yesNo[item.yesno]}';
+  }
+
   // void _getHistory() {
   //   if (widget.idx == null) return;
   //   _db.rawQuery(
@@ -109,118 +235,129 @@ class _InspeksiChecklistPageState extends State<InspeksiChecklistPage> {
         appBar: TopBar(title: 'Checklist ${pageTitle(widget.module)}', back: 2),
         body: Column(
           children: [
-            Container(
+            Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              width: MediaQuery.of(context).size.width,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  backgroundColor: Colors.green,
-                  minimumSize: const Size(100, 30),
-                ),
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: const Text(
-                          'Tentukan Nilai Awal Jawaban',
-                          textAlign: TextAlign.center,
-                        ),
-                        content: SizedBox(
-                          height: 125,
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.green,
+                      minimumSize: const Size(100, 30),
+                    ),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text(
+                              'Tentukan Nilai Awal Jawaban',
+                              textAlign: TextAlign.center,
+                            ),
+                            content: SizedBox(
+                              height: 125,
+                              child: Column(
                                 children: [
-                                  TextButton(
-                                    style: TextButton.styleFrom(
-                                      textStyle: Theme.of(context)
-                                          .textTheme
-                                          .labelLarge,
-                                    ),
-                                    child: const Text('YA'),
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                      for (var i = 0;
-                                          i < _checkList.length;
-                                          i++) {
-                                        _checkList[i].yesno = 1;
-                                      }
-                                      setState(() {});
-                                    },
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      TextButton(
+                                        style: TextButton.styleFrom(
+                                          textStyle: Theme.of(context)
+                                              .textTheme
+                                              .labelLarge,
+                                        ),
+                                        child: const Text('YA'),
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                          for (var i = 0;
+                                              i < _checkList.length;
+                                              i++) {
+                                            _checkList[i].yesno = 1;
+                                          }
+                                          setState(() {});
+                                        },
+                                      ),
+                                      TextButton(
+                                        style: TextButton.styleFrom(
+                                          textStyle: Theme.of(context)
+                                              .textTheme
+                                              .labelLarge,
+                                        ),
+                                        child: const Text('N/A'),
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                          for (var i = 0;
+                                              i < _checkList.length;
+                                              i++) {
+                                            _checkList[i].yesno = 2;
+                                          }
+                                          setState(() {});
+                                        },
+                                      ),
+                                      const Text('atau'),
+                                      TextButton(
+                                        style: TextButton.styleFrom(
+                                          textStyle: Theme.of(context)
+                                              .textTheme
+                                              .labelLarge,
+                                        ),
+                                        child: const Text('KOSONG'),
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                          for (var i = 0;
+                                              i < _checkList.length;
+                                              i++) {
+                                            _checkList[i].yesno = null;
+                                          }
+                                          setState(() {});
+                                        },
+                                      ),
+                                    ],
                                   ),
-                                  TextButton(
-                                    style: TextButton.styleFrom(
-                                      textStyle: Theme.of(context)
-                                          .textTheme
-                                          .labelLarge,
+                                  Card(
+                                    color: Colors.yellow.shade200,
+                                    shadowColor: Colors.transparent,
+                                    margin: const EdgeInsets.only(top: 10),
+                                    child: const Padding(
+                                      padding: EdgeInsets.all(10),
+                                      child: Text(
+                                        'pastikan anda tetap melakukan cek setiap list inspeksi',
+                                        textAlign: TextAlign.center,
+                                      ),
                                     ),
-                                    child: const Text('N/A'),
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                      for (var i = 0;
-                                          i < _checkList.length;
-                                          i++) {
-                                        _checkList[i].yesno = 2;
-                                      }
-                                      setState(() {});
-                                    },
-                                  ),
-                                  const Text('atau'),
-                                  TextButton(
-                                    style: TextButton.styleFrom(
-                                      textStyle: Theme.of(context)
-                                          .textTheme
-                                          .labelLarge,
-                                    ),
-                                    child: const Text('KOSONG'),
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                      for (var i = 0;
-                                          i < _checkList.length;
-                                          i++) {
-                                        _checkList[i].yesno = null;
-                                      }
-                                      setState(() {});
-                                    },
                                   ),
                                 ],
                               ),
-                              Card(
-                                color: Colors.yellow.shade200,
-                                shadowColor: Colors.transparent,
-                                margin: const EdgeInsets.only(top: 10),
-                                child: const Padding(
-                                  padding: EdgeInsets.all(10),
-                                  child: Text(
-                                    'pastikan anda tetap melakukan cek setiap list inspeksi',
-                                    textAlign: TextAlign.center,
-                                  ),
+                            ),
+                            actions: [
+                              TextButton(
+                                style: TextButton.styleFrom(
+                                  textStyle:
+                                      Theme.of(context).textTheme.labelLarge,
                                 ),
+                                child: const Text('Cancel'),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
                               ),
                             ],
-                          ),
-                        ),
-                        actions: [
-                          TextButton(
-                            style: TextButton.styleFrom(
-                              textStyle: Theme.of(context).textTheme.labelLarge,
-                            ),
-                            child: const Text('Cancel'),
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                          ),
-                        ],
-                        actionsPadding: const EdgeInsets.all(0),
-                        actionsAlignment: MainAxisAlignment.center,
+                            actionsPadding: const EdgeInsets.all(0),
+                            actionsAlignment: MainAxisAlignment.center,
+                          );
+                        },
                       );
                     },
-                  );
-                },
-                child: const Text('Tentukan nilai awal jawaban'),
+                    child: const Text('Tentukan nilai awal jawaban'),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: _addCustomQuestion,
+                    icon: const Icon(Icons.add_circle_outline_rounded),
+                    label: const Text('Tambah Pertanyaan Custom'),
+                  ),
+                ],
               ),
             ),
             Expanded(
@@ -229,7 +366,7 @@ class _InspeksiChecklistPageState extends State<InspeksiChecklistPage> {
                 shrinkWrap: true,
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: _rawData.length,
+                itemCount: _checkList.length,
                 itemBuilder: (context, index) {
                   return Card(
                     color: (_checkList[index].yesno == 1
@@ -262,7 +399,7 @@ class _InspeksiChecklistPageState extends State<InspeksiChecklistPage> {
                         ),
                       ),
                       subtitle: Text(
-                        'Jawab: ${(_checkList[index].yesno == null ? '' : globals.yesNo[_checkList[index].yesno])}',
+                        _answerSummary(_checkList[index]),
                         textAlign: TextAlign.left,
                       ),
                       trailing: Icon(
@@ -321,10 +458,13 @@ class _InspeksiChecklistPageState extends State<InspeksiChecklistPage> {
                         if (tranId > 0) {
                           syncTran(_db, _api, 'inspection', tranId)
                               .then((sync) {
+                            if (!mounted) return;
                             if (sync == true) {
-                              SnackBarMsg.success(context, 'Berhasil sinkron!');
+                              SnackBarMsg.success(
+                                  this.context, 'Berhasil sinkron!');
                             } else {
-                              SnackBarMsg.danger(context, 'Gagal sinkron!');
+                              SnackBarMsg.danger(
+                                  this.context, 'Gagal sinkron!');
                             }
                           });
                           for (var row in _checkList) {
@@ -340,14 +480,18 @@ class _InspeksiChecklistPageState extends State<InspeksiChecklistPage> {
                                   tranId, itemId);
                             });
                           }
-                          alertSuccess(context, widget.module, lastId: tranId);
+                          if (!mounted) return;
+                          alertSuccess(this.context, widget.module,
+                              lastId: tranId);
                         } else {
-                          alertFailed(context, widget.module);
+                          if (!mounted) return;
+                          alertFailed(this.context, widget.module);
                         }
                       });
                     } catch (e) {
                       debugPrint(e.toString());
-                      alertFailed(context, widget.module);
+                      if (!mounted) return;
+                      alertFailed(this.context, widget.module);
                     }
                   },
           ),

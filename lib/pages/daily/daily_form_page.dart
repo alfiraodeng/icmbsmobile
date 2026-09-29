@@ -12,6 +12,7 @@ import '../../services/preference.dart';
 import '../../utils/enums.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/button_app.dart';
+import '../../widgets/sap_form_widgets.dart';
 import '../../widgets/top_bar.dart';
 import 'daily_checklist_page.dart';
 
@@ -49,6 +50,7 @@ class _DailyFormPageState extends State<DailyFormPage> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fillGpsFromDevice(silent: true);
       _db.rawQuery('''select
         me.id id_shift,
         me."name" shift
@@ -97,6 +99,30 @@ class _DailyFormPageState extends State<DailyFormPage> {
     /** */
 
     super.dispose();
+  }
+
+  Future<void> _fillGpsFromDevice({bool silent = false}) {
+    return fillGpsCoordinate(
+      context,
+      _locationDetail,
+      () => setState(() {}),
+      silent: silent,
+    );
+  }
+
+  Future<void> _addCustomLocation() async {
+    final item = await showAddCustomLocationDialog(
+      context: context,
+      db: _db,
+      areaId: _areaId,
+    );
+    if (item == null) return;
+    setState(() {
+      _locationList.add(item);
+      _locationList.sort((a, b) => a.value.compareTo(b.value));
+      _locationId = item.key;
+      _locationDetail.text = item.value;
+    });
   }
 
   void _getLocation(int val) {
@@ -337,6 +363,7 @@ class _DailyFormPageState extends State<DailyFormPage> {
                   });
                 },
               ),
+              AddCustomLocationButton(onPressed: _addCustomLocation),
               const SizedBox(height: 15),
               const Text(
                 'Lokasi Detail',
@@ -348,15 +375,10 @@ class _DailyFormPageState extends State<DailyFormPage> {
               const SizedBox(height: 10),
               TextFormField(
                 controller: _locationDetail,
-                decoration: InputDecoration(
-                  prefixIcon: Padding(
-                    padding: const EdgeInsets.only(left: 10),
-                    child: Icon(
-                      Icons.location_on,
-                      size: 24,
-                      color: Colors.indigo.shade400,
-                    ),
-                  ),
+                decoration: gpsInputDecoration(
+                  context: context,
+                  onPressed: _fillGpsFromDevice,
+                  iconColor: Colors.indigo.shade400,
                 ),
                 style: const TextStyle(fontSize: 16),
                 onChanged: (String val) => setState(() {}),

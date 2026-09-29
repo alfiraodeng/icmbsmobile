@@ -25,6 +25,14 @@ class _InspeksiCheckitemPageState extends State<InspeksiCheckitemPage> {
   final _scrollCtrl = ScrollController();
   bool _ready = false;
 
+  bool get _isFreeText => widget.checkList.type == 'text';
+  bool get _isCustomRadio => widget.checkList.type == 'radio_custom';
+  List<String> get _customOptions => (widget.checkList.flag ?? '')
+      .split(',')
+      .map((e) => e.trim())
+      .where((e) => e.isNotEmpty)
+      .toList();
+
   @override
   void initState() {
     super.initState();
@@ -82,49 +90,81 @@ class _InspeksiCheckitemPageState extends State<InspeksiCheckitemPage> {
                         color: Colors.indigo,
                       ),
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          width: 40,
-                          child: Radio(
-                            activeColor: Colors.green,
-                            value: 1,
-                            groupValue: widget.checkList.yesno,
-                            onChanged: (value) {
+                    if (_isFreeText) ...[
+                      const SizedBox(height: 18),
+                      TextFormField(
+                        initialValue: widget.checkList.remark,
+                        minLines: 4,
+                        maxLines: 6,
+                        decoration: const InputDecoration(
+                          labelText: 'Jawaban Free Text',
+                          hintText:
+                              'Tulis jawaban inspeksi sesuai kondisi lapangan...',
+                          prefixIcon: Icon(Icons.notes_rounded),
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            widget.checkList.remark = value;
+                            widget.checkList.yesno =
+                                value.trim().isEmpty ? null : 1;
+                          });
+                        },
+                      ),
+                    ],
+                    if (_isCustomRadio) ...[
+                      const SizedBox(height: 18),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        alignment: WrapAlignment.center,
+                        children: _customOptions.map((option) {
+                          return ChoiceChip(
+                            selected: widget.checkList.remark == option,
+                            label: Text(option),
+                            onSelected: (_) {
+                              setState(() {
+                                widget.checkList.remark = option;
+                                widget.checkList.yesno = 1;
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                    if (!_isFreeText && !_isCustomRadio) ...[
+                      const SizedBox(height: 18),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        alignment: WrapAlignment.center,
+                        children: [
+                          ChoiceChip(
+                            selected: widget.checkList.yesno == 1,
+                            label: const Text('YA'),
+                            selectedColor: Colors.green.shade100,
+                            onSelected: (_) {
                               setState(() => widget.checkList.yesno = 1);
                             },
                           ),
-                        ),
-                        const Text('YA'),
-                        const SizedBox(width: 40),
-                        SizedBox(
-                          width: 40,
-                          child: Radio(
-                            activeColor: Colors.red,
-                            value: 0,
-                            groupValue: widget.checkList.yesno,
-                            onChanged: (value) {
+                          ChoiceChip(
+                            selected: widget.checkList.yesno == 0,
+                            label: const Text('TIDAK'),
+                            selectedColor: Colors.red.shade100,
+                            onSelected: (_) {
                               setState(() => widget.checkList.yesno = 0);
                             },
                           ),
-                        ),
-                        const Text('TIDAK'),
-                        const SizedBox(width: 20),
-                        SizedBox(
-                          width: 40,
-                          child: Radio(
-                            activeColor: Colors.blue,
-                            value: 2,
-                            groupValue: widget.checkList.yesno,
-                            onChanged: (value) {
+                          ChoiceChip(
+                            selected: widget.checkList.yesno == 2,
+                            label: const Text('N/A'),
+                            selectedColor: Colors.blue.shade100,
+                            onSelected: (_) {
                               setState(() => widget.checkList.yesno = 2);
                             },
                           ),
-                        ),
-                        const Text('N/A'),
-                      ],
-                    ),
+                        ],
+                      ),
+                    ],
                     Visibility(
                       visible: widget.checkList.yesno == 0,
                       child: InkWell(
@@ -271,42 +311,36 @@ class _InspeksiCheckitemPageState extends State<InspeksiCheckitemPage> {
                               widget.checkList.remark != '')
                           ? true
                           : false,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      child: Wrap(
+                        spacing: 10,
+                        runSpacing: 8,
+                        alignment: WrapAlignment.center,
                         children: [
-                          SizedBox(
-                            width: 40,
-                            child: Radio(
-                              activeColor: Colors.green,
-                              value: 1,
-                              groupValue: widget.checkList.repair,
-                              onChanged: (value) {
-                                setState(() => widget.checkList.repair = 1);
-                                Future.delayed(
-                                    const Duration(milliseconds: 200), () {
-                                  _scrollCtrl.animateTo(
-                                    _scrollCtrl.position.maxScrollExtent,
-                                    duration: const Duration(milliseconds: 500),
-                                    curve: Curves.easeOut,
-                                  );
-                                });
-                              },
-                            ),
+                          ChoiceChip(
+                            selected: widget.checkList.repair == 1,
+                            label: const Text('YA'),
+                            selectedColor: Colors.green.shade100,
+                            onSelected: (_) {
+                              setState(() => widget.checkList.repair = 1);
+                              Future.delayed(const Duration(milliseconds: 200),
+                                  () {
+                                if (!mounted) return;
+                                _scrollCtrl.animateTo(
+                                  _scrollCtrl.position.maxScrollExtent,
+                                  duration: const Duration(milliseconds: 500),
+                                  curve: Curves.easeOut,
+                                );
+                              });
+                            },
                           ),
-                          const Text('YA'),
-                          const SizedBox(width: 50),
-                          SizedBox(
-                            width: 40,
-                            child: Radio(
-                              activeColor: Colors.red,
-                              value: 0,
-                              groupValue: widget.checkList.repair,
-                              onChanged: (value) {
-                                setState(() => widget.checkList.repair = 0);
-                              },
-                            ),
+                          ChoiceChip(
+                            selected: widget.checkList.repair == 0,
+                            label: const Text('TIDAK'),
+                            selectedColor: Colors.red.shade100,
+                            onSelected: (_) {
+                              setState(() => widget.checkList.repair = 0);
+                            },
                           ),
-                          const Text('TIDAK'),
                         ],
                       ),
                     ),
@@ -464,9 +498,7 @@ class _InspeksiCheckitemPageState extends State<InspeksiCheckitemPage> {
                   // }
 
                   globals.checkList = widget.checkList;
-                  Future.delayed(const Duration(milliseconds: 500), () {
-                    Navigator.pop(context, false);
-                  });
+                  Navigator.pop(context, false);
                 },
         ),
       ),
