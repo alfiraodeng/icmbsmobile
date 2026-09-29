@@ -78,6 +78,34 @@ List<LinkMenuModel> listMenuSap = <LinkMenuModel>[
 
 List<LinkMenuModel> listMenuOhs1 = <LinkMenuModel>[
   LinkMenuModel(
+    title: 'Management\nInspection',
+    icon: Icons.manage_search_sharp,
+    image: 'assets/icons/ohs-01.png',
+    route: '/inspection',
+    opacity: 1,
+  ),
+  LinkMenuModel(
+    title: 'Daily\nInspection',
+    icon: Icons.fact_check_rounded,
+    image: 'assets/icons/ohs-02.png',
+    route: '/daily_inspection',
+    opacity: 1,
+  ),
+  LinkMenuModel(
+    title: 'Fit to Work\nP5M',
+    icon: Icons.health_and_safety_rounded,
+    image: 'assets/icons/ohs-03.png',
+    route: '/p5m',
+    opacity: 1,
+  ),
+  LinkMenuModel(
+    title: 'SiMaMa',
+    icon: Icons.nightlight_round,
+    image: 'assets/icons/ohs-01.png',
+    route: '/simama',
+    opacity: 1,
+  ),
+  LinkMenuModel(
     title: 'P2H',
     icon: Icons.car_repair_rounded,
     image: 'assets/icons/extra-03.png',
