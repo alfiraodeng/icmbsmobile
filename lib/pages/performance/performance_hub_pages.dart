@@ -462,6 +462,7 @@ class _DriverPerformanceAssessmentPageState
   final _formKey = GlobalKey<FormState>();
   final _routeController = TextEditingController();
   final _vehicleController = TextEditingController();
+  final _externalDriverController = TextEditingController();
   final _notesController = TextEditingController();
   final _db = DatabaseService();
 
@@ -494,6 +495,9 @@ class _DriverPerformanceAssessmentPageState
 
   final Map<String, int> _ratings = {};
   _DpaDriver? _selectedDriver;
+  _DpaVehicle? _selectedVehicle;
+  bool _isExternalDriver = false;
+  bool _isRentalVehicle = false;
   String? _tripType;
   DateTime _assessmentDate = DateTime.now();
   final Set<int> _expandedSections = {1, 2};
@@ -502,6 +506,7 @@ class _DriverPerformanceAssessmentPageState
   void dispose() {
     _routeController.dispose();
     _vehicleController.dispose();
+    _externalDriverController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -672,12 +677,194 @@ class _DriverPerformanceAssessmentPageState
     setState(() => _selectedDriver = value);
   }
 
+  Future<void> _selectVehicle() async {
+    final rows = await _db.rawQuery('''select
+      mv.id,
+      mv.code,
+      mv."name",
+      mv.type,
+      mv.license_plate,
+      mv.company
+    from vehicle_masters mv
+    where mv.deleted_at is null
+    order by mv.code''');
+    if (!mounted) return;
+
+    final vehicles = rows
+        .map((row) => _DpaVehicle(
+              id: row['id'] as int,
+              code: row['code'] == null ? '' : '${row['code']}',
+              name: row['name'] == null ? '' : '${row['name']}',
+              type: row['type'] == null ? '' : '${row['type']}',
+              licensePlate:
+                  row['license_plate'] == null ? '' : '${row['license_plate']}',
+              company: row['company'] == null ? '' : '${row['company']}',
+            ))
+        .toList();
+    var query = '';
+    final value = await showModalBottomSheet<_DpaVehicle>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final keyword = query.toLowerCase();
+          final filtered = vehicles.where((vehicle) {
+            return vehicle.code.toLowerCase().contains(keyword) ||
+                vehicle.licensePlate.toLowerCase().contains(keyword) ||
+                vehicle.name.toLowerCase().contains(keyword);
+          }).toList();
+          return FractionallySizedBox(
+            heightFactor: .86,
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 5,
+                    margin: const EdgeInsets.only(top: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.blueGrey.shade200,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 16, 10, 10),
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Pilih Unit Kendaraan',
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w800)),
+                              SizedBox(height: 3),
+                              Text(
+                                  'Cari nomor lambung, plat polisi, atau nama unit',
+                                  style: TextStyle(
+                                      color: Colors.black54, fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close_rounded),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 4, 18, 12),
+                    child: TextField(
+                      autofocus: true,
+                      textCapitalization: TextCapitalization.characters,
+                      decoration: _dpaInputDecoration(
+                        hint: 'Cari unit kendaraan...',
+                        icon: Icons.search_rounded,
+                      ),
+                      onChanged: (value) =>
+                          setModalState(() => query = value.trim()),
+                    ),
+                  ),
+                  Expanded(
+                    child: vehicles.isEmpty
+                        ? const _DpaDriverEmptyState(
+                            icon: Icons.local_shipping_outlined,
+                            title: 'Master kendaraan belum tersedia',
+                            message:
+                                'Sinkronkan master data atau pilih Unit Rental untuk mengisi manual.',
+                          )
+                        : filtered.isEmpty
+                            ? const _DpaDriverEmptyState(
+                                icon: Icons.search_off_rounded,
+                                title: 'Unit tidak ditemukan',
+                                message:
+                                    'Periksa nomor lambung atau plat polisi yang dicari.',
+                              )
+                            : ListView.separated(
+                                padding:
+                                    const EdgeInsets.fromLTRB(18, 0, 18, 24),
+                                itemCount: filtered.length,
+                                separatorBuilder: (context, index) =>
+                                    const Divider(height: 1),
+                                itemBuilder: (context, index) {
+                                  final vehicle = filtered[index];
+                                  final selected =
+                                      vehicle.id == _selectedVehicle?.id;
+                                  final identifier = [
+                                    if (vehicle.code.isNotEmpty) vehicle.code,
+                                    if (vehicle.licensePlate.isNotEmpty)
+                                      vehicle.licensePlate,
+                                  ].join(' • ');
+                                  final detail = [
+                                    if (vehicle.name.isNotEmpty) vehicle.name,
+                                    if (vehicle.type.isNotEmpty) vehicle.type,
+                                    if (vehicle.company.isNotEmpty)
+                                      vehicle.company,
+                                  ].join(' • ');
+                                  return ListTile(
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 4, vertical: 5),
+                                    leading: CircleAvatar(
+                                      backgroundColor: selected
+                                          ? const Color(0xFF1769E8)
+                                          : const Color(0xFFEAF2FF),
+                                      child: Icon(Icons.directions_car_rounded,
+                                          color: selected
+                                              ? Colors.white
+                                              : const Color(0xFF1769E8)),
+                                    ),
+                                    title: Text(
+                                        identifier.isEmpty
+                                            ? 'Tanpa nomor unit'
+                                            : identifier,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w800)),
+                                    subtitle:
+                                        Text(detail.isEmpty ? '-' : detail),
+                                    trailing: selected
+                                        ? const Icon(Icons.check_circle_rounded,
+                                            color: Color(0xFF1769E8))
+                                        : const Icon(
+                                            Icons.chevron_right_rounded),
+                                    onTap: () =>
+                                        Navigator.pop(context, vehicle),
+                                  );
+                                },
+                              ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+    if (value == null || !mounted) return;
+    setState(() => _selectedVehicle = value);
+  }
+
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedDriver == null) {
+    if (!_isExternalDriver && _selectedDriver == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Pilih NIK driver terlebih dahulu.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+    if (!_isRentalVehicle && _selectedVehicle == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pilih unit kendaraan terlebih dahulu.'),
           backgroundColor: Colors.orange,
         ),
       );
@@ -699,6 +886,9 @@ class _DriverPerformanceAssessmentPageState
 
     final total = _ratings.values.fold<int>(0, (sum, score) => sum + score);
     final score = (total / (_ratings.length * 5) * 100).round();
+    final driverName = _isExternalDriver
+        ? _externalDriverController.text.trim()
+        : '${_selectedDriver!.name} (${_selectedDriver!.nik})';
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
@@ -706,7 +896,7 @@ class _DriverPerformanceAssessmentPageState
             color: Color(0xFF16A34A), size: 52),
         title: const Text('Penilaian Tersimpan'),
         content: Text(
-          'Penilaian ${_selectedDriver!.name} (${_selectedDriver!.nik}) berhasil disimpan dengan nilai $score/100. Data ini masih tersimpan sebagai mockup dan siap disambungkan ke database.',
+          'Penilaian $driverName berhasil disimpan dengan nilai $score/100. Data ini masih tersimpan sebagai mockup dan siap disambungkan ke database.',
           textAlign: TextAlign.center,
         ),
         actionsAlignment: MainAxisAlignment.center,
@@ -762,70 +952,41 @@ class _DriverPerformanceAssessmentPageState
                   _DpaLabeledField(
                     label: 'Nama Driver',
                     required: true,
-                    action: OutlinedButton.icon(
-                      onPressed: _selectDriver,
-                      icon: Icon(
-                          _selectedDriver == null
-                              ? Icons.person_search_rounded
-                              : Icons.swap_horiz_rounded,
-                          size: 17),
-                      label: Text(_selectedDriver == null
-                          ? 'Add Driver'
-                          : 'Ganti Driver'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 7),
-                        foregroundColor: const Color(0xFF16864B),
-                        side: const BorderSide(color: Color(0xFF16864B)),
-                        visualDensity: VisualDensity.compact,
-                      ),
-                    ),
-                    helper:
-                        'Driver diambil langsung dari master karyawan berdasarkan NIK.',
-                    child: InkWell(
-                      onTap: _selectDriver,
-                      borderRadius: BorderRadius.circular(13),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 13),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF0F4F9),
-                          borderRadius: BorderRadius.circular(13),
+                    helper: _isExternalDriver
+                        ? 'Gunakan untuk driver vendor atau driver di luar Indexim.'
+                        : 'Driver internal dipilih berdasarkan NIK master karyawan.',
+                    child: Column(
+                      children: [
+                        _DpaSourceToggle(
+                          firstLabel: 'Driver Internal',
+                          secondLabel: 'Driver Eksternal',
+                          secondSelected: _isExternalDriver,
+                          onChanged: (value) =>
+                              setState(() => _isExternalDriver = value),
                         ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.badge_rounded,
-                                color: Color(0xFF1769E8), size: 21),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _selectedDriver == null
-                                  ? Text('Belum ada driver dipilih',
-                                      style: TextStyle(
-                                          color: Colors.blueGrey.shade400,
-                                          fontSize: 13))
-                                  : Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(_selectedDriver!.nik,
-                                            style: const TextStyle(
-                                                fontSize: 12,
-                                                color: Color(0xFF1769E8),
-                                                fontWeight: FontWeight.w800)),
-                                        const SizedBox(height: 2),
-                                        Text(_selectedDriver!.name,
-                                            style: const TextStyle(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w700)),
-                                      ],
-                                    ),
+                        const SizedBox(height: 10),
+                        if (_isExternalDriver)
+                          TextFormField(
+                            controller: _externalDriverController,
+                            textCapitalization: TextCapitalization.words,
+                            decoration: _dpaInputDecoration(
+                              hint: 'Masukkan nama driver eksternal',
+                              icon: Icons.person_outline_rounded,
                             ),
-                            const Icon(Icons.chevron_right_rounded,
-                                color: Colors.black45),
-                          ],
-                        ),
-                      ),
+                            validator: (value) => _isExternalDriver &&
+                                    (value == null || value.trim().isEmpty)
+                                ? 'Nama driver eksternal wajib diisi'
+                                : null,
+                          )
+                        else
+                          _DpaSelectionTile(
+                            icon: Icons.badge_rounded,
+                            title: _selectedDriver?.nik ??
+                                'Pilih NIK driver internal',
+                            subtitle: _selectedDriver?.name,
+                            onTap: _selectDriver,
+                          ),
+                      ],
                     ),
                   ),
                   _DpaLabeledField(
@@ -890,14 +1051,57 @@ class _DriverPerformanceAssessmentPageState
                     ),
                   ),
                   _DpaLabeledField(
-                    label: 'No. Lambung Kendaraan',
-                    child: TextFormField(
-                      controller: _vehicleController,
-                      textCapitalization: TextCapitalization.characters,
-                      decoration: _dpaInputDecoration(
-                        hint: 'Misal: LV-001',
-                        icon: Icons.airport_shuttle_rounded,
-                      ),
+                    label: 'Unit Kendaraan',
+                    required: true,
+                    helper: _isRentalVehicle
+                        ? 'Isi nomor lambung atau nomor plat polisi unit rental.'
+                        : 'Unit dipilih dari master kendaraan perusahaan.',
+                    child: Column(
+                      children: [
+                        _DpaSourceToggle(
+                          firstLabel: 'Unit Database',
+                          secondLabel: 'Unit Rental',
+                          secondSelected: _isRentalVehicle,
+                          onChanged: (value) =>
+                              setState(() => _isRentalVehicle = value),
+                        ),
+                        const SizedBox(height: 10),
+                        if (_isRentalVehicle)
+                          TextFormField(
+                            controller: _vehicleController,
+                            textCapitalization: TextCapitalization.characters,
+                            decoration: _dpaInputDecoration(
+                              hint: 'Nomor lambung atau plat polisi',
+                              icon: Icons.pin_rounded,
+                            ),
+                            validator: (value) => _isRentalVehicle &&
+                                    (value == null || value.trim().isEmpty)
+                                ? 'Nomor unit rental wajib diisi'
+                                : null,
+                          )
+                        else
+                          _DpaSelectionTile(
+                            icon: Icons.directions_car_rounded,
+                            title: _selectedVehicle == null
+                                ? 'Pilih unit kendaraan'
+                                : [
+                                    if (_selectedVehicle!.code.isNotEmpty)
+                                      _selectedVehicle!.code,
+                                    if (_selectedVehicle!
+                                        .licensePlate.isNotEmpty)
+                                      _selectedVehicle!.licensePlate,
+                                  ].join(' • '),
+                            subtitle: _selectedVehicle == null
+                                ? null
+                                : [
+                                    if (_selectedVehicle!.name.isNotEmpty)
+                                      _selectedVehicle!.name,
+                                    if (_selectedVehicle!.type.isNotEmpty)
+                                      _selectedVehicle!.type,
+                                  ].join(' • '),
+                            onTap: _selectVehicle,
+                          ),
+                      ],
                     ),
                   ),
                 ],
@@ -1017,6 +1221,179 @@ class _DpaDriver {
   final String nik;
   final String name;
   final String position;
+}
+
+class _DpaVehicle {
+  const _DpaVehicle({
+    required this.id,
+    required this.code,
+    required this.name,
+    required this.type,
+    required this.licensePlate,
+    required this.company,
+  });
+
+  final int id;
+  final String code;
+  final String name;
+  final String type;
+  final String licensePlate;
+  final String company;
+}
+
+class _DpaSourceToggle extends StatelessWidget {
+  const _DpaSourceToggle({
+    required this.firstLabel,
+    required this.secondLabel,
+    required this.secondSelected,
+    required this.onChanged,
+  });
+
+  final String firstLabel;
+  final String secondLabel;
+  final bool secondSelected;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8EDF4),
+        borderRadius: BorderRadius.circular(11),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _DpaSourceOption(
+              label: firstLabel,
+              selected: !secondSelected,
+              onTap: () => onChanged(false),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: _DpaSourceOption(
+              label: secondLabel,
+              selected: secondSelected,
+              onTap: () => onChanged(true),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DpaSourceOption extends StatelessWidget {
+  const _DpaSourceOption({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
+        decoration: BoxDecoration(
+          color: selected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: .06),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: selected ? const Color(0xFF1769E8) : Colors.blueGrey,
+            fontSize: 11.5,
+            fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DpaSelectionTile extends StatelessWidget {
+  const _DpaSelectionTile({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    this.subtitle,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(13),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0F4F9),
+          borderRadius: BorderRadius.circular(13),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: const Color(0xFF1769E8), size: 21),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: subtitle == null
+                          ? Colors.blueGrey.shade400
+                          : const Color(0xFF1769E8),
+                      fontSize: 12,
+                      fontWeight:
+                          subtitle == null ? FontWeight.w500 : FontWeight.w800,
+                    ),
+                  ),
+                  if (subtitle != null && subtitle!.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(subtitle!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w700)),
+                  ],
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: Colors.black45),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _DpaDriverEmptyState extends StatelessWidget {
@@ -1153,14 +1530,12 @@ class _DpaLabeledField extends StatelessWidget {
     required this.label,
     required this.child,
     this.required = false,
-    this.action,
     this.helper,
   });
 
   final String label;
   final Widget child;
   final bool required;
-  final Widget? action;
   final String? helper;
 
   @override
@@ -1168,26 +1543,16 @@ class _DpaLabeledField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text.rich(
-                TextSpan(
-                  text: label.toUpperCase(),
-                  children: [
-                    if (required)
-                      const TextSpan(
-                          text: ' *', style: TextStyle(color: Colors.red)),
-                  ],
-                ),
-                style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: .2),
-              ),
-            ),
-            if (action != null) action!,
-          ],
+        Text.rich(
+          TextSpan(
+            text: label.toUpperCase(),
+            children: [
+              if (required)
+                const TextSpan(text: ' *', style: TextStyle(color: Colors.red)),
+            ],
+          ),
+          style: const TextStyle(
+              fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: .2),
         ),
         const SizedBox(height: 7),
         child,
@@ -1340,11 +1705,11 @@ class _DpaQuestion extends StatelessWidget {
   final ValueChanged<int> onSelected;
 
   static const _options = [
-    (5, 'Sangat Baik', Color(0xFF16A34A), Color(0xFFECFDF3)),
-    (4, 'Baik', Color(0xFF0EA5E9), Color(0xFFEFF8FF)),
-    (3, 'Cukup', Color(0xFFF59E0B), Color(0xFFFFF8E7)),
-    (2, 'Kurang', Color(0xFFF97316), Color(0xFFFFF3EB)),
-    (1, 'Sangat Kurang', Color(0xFFF43F5E), Color(0xFFFFF1F3)),
+    (5, 'Sangat\nBaik'),
+    (4, 'Baik'),
+    (3, 'Cukup'),
+    (2, 'Kurang'),
+    (1, 'Sangat\nKurang'),
   ];
 
   @override
@@ -1371,58 +1736,59 @@ class _DpaQuestion extends StatelessWidget {
                     final isSelected = selected == option.$1;
                     return InkWell(
                       onTap: () => onSelected(option.$1),
-                      borderRadius: BorderRadius.circular(10),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 160),
-                        height: 36,
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        decoration: BoxDecoration(
-                          color: isSelected ? option.$3 : option.$4,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: option.$3,
-                            width: isSelected ? 1.4 : 1,
-                          ),
-                          boxShadow: isSelected
-                              ? [
-                                  BoxShadow(
-                                    color: option.$3.withValues(alpha: .22),
-                                    blurRadius: 7,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ]
-                              : null,
-                        ),
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                isSelected
-                                    ? Icons.check_circle_rounded
-                                    : Icons.star_outline_rounded,
-                                size: 12,
-                                color: isSelected ? Colors.white : option.$3,
-                              ),
-                              const SizedBox(width: 3),
-                              Text(
-                                option.$2,
-                                maxLines: 1,
-                                style: TextStyle(
-                                  color: isSelected ? Colors.white : option.$3,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 160),
+                              width: 22,
+                              height: 22,
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white,
+                                border: Border.all(
+                                  color: isSelected
+                                      ? const Color(0xFF1769E8)
+                                      : const Color(0xFFB8C2D1),
+                                  width: isSelected ? 2 : 1.4,
                                 ),
                               ),
-                            ],
-                          ),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 160),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isSelected
+                                      ? const Color(0xFF1769E8)
+                                      : Colors.transparent,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              option.$2,
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              style: TextStyle(
+                                color: isSelected
+                                    ? const Color(0xFF1769E8)
+                                    : Colors.blueGrey.shade600,
+                                fontSize: 10,
+                                height: 1.05,
+                                fontWeight: isSelected
+                                    ? FontWeight.w800
+                                    : FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     );
                   }),
                 ),
-                if (i < _options.length - 1) const SizedBox(width: 5),
               ],
             ],
           ),
