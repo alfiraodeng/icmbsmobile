@@ -161,7 +161,6 @@ class _ObservationFormPageState extends State<ObservationFormPage> {
       _locationList.add(item);
       _locationList.sort((a, b) => a.value.compareTo(b.value));
       _locationId = item.key;
-      _locationDetail.text = item.value;
     });
   }
 
@@ -178,7 +177,6 @@ class _ObservationFormPageState extends State<ObservationFormPage> {
         row['id_lokasi'] as int: row['lokasi']
     }.entries.toList();
     _locationList.sort((a, b) => (a.value).compareTo(b.value));
-    _locationDetail.text = '';
   }
 
   @override

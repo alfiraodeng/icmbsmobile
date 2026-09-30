@@ -309,6 +309,17 @@ Future<void> fillGpsCoordinate(
   bool silent = false,
 }) async {
   try {
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      if (!silent && context.mounted) {
+        SnackBarMsg.warning(
+          context,
+          'Aktifkan layanan lokasi perangkat agar koordinat terisi otomatis.',
+        );
+      }
+      return;
+    }
+
     var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
@@ -328,6 +339,7 @@ Future<void> fillGpsCoordinate(
     final position = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
     );
+    if (!context.mounted) return;
     controller.text =
         '${position.latitude.toStringAsFixed(6)}, ${position.longitude.toStringAsFixed(6)}';
     onChanged();
@@ -347,7 +359,7 @@ InputDecoration gpsInputDecoration({
   Color iconColor = const Color(0xFF4F46E5),
 }) {
   return InputDecoration(
-    hintText: 'Klik ikon lokasi untuk ambil koordinat GPS otomatis',
+    hintText: 'Koordinat GPS akan terisi otomatis',
     prefixIcon: Padding(
       padding: const EdgeInsets.only(left: 10),
       child: Icon(
@@ -357,8 +369,8 @@ InputDecoration gpsInputDecoration({
       ),
     ),
     suffixIcon: IconButton(
-      tooltip: 'Ambil Lokasi Aktual GPS',
-      icon: const Icon(Icons.my_location_rounded),
+      tooltip: 'Perbarui koordinat GPS',
+      icon: const Icon(Icons.gps_fixed_rounded),
       color: Theme.of(context).colorScheme.primary,
       onPressed: onPressed,
     ),

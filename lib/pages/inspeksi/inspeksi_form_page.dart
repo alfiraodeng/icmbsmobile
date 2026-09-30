@@ -157,7 +157,6 @@ class _InspeksiFormPageState extends State<InspeksiFormPage> {
       _locationList.add(item);
       _locationList.sort((a, b) => a.value.compareTo(b.value));
       _locationId = item.key;
-      _locationDetail.text = item.value;
     });
   }
 
@@ -175,7 +174,6 @@ class _InspeksiFormPageState extends State<InspeksiFormPage> {
     _areaList.sort((a, b) => (a.value).compareTo(b.value));
     _locationId = null;
     _locationList = [];
-    _locationDetail.text = '';
     _pjaId = null;
     _pjaList = [];
   }
@@ -195,7 +193,6 @@ class _InspeksiFormPageState extends State<InspeksiFormPage> {
         row['id_lokasi'] as int: row['lokasi']
     }.entries.toList();
     _locationList.sort((a, b) => (a.value).compareTo(b.value));
-    _locationDetail.text = '';
     _pjaId = null;
     _pjaList = [];
   }
