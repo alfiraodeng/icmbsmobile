@@ -139,59 +139,141 @@ class _HomePageState extends State<HomePage> {
 
   Widget bottomNavBar() {
     return SizedBox(
-      height: 104,
-      child: BottomNavigationBar(
-        iconSize: 28,
-        selectedFontSize: 11,
-        unselectedFontSize: 10,
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home, size: 28),
-            label: 'Beranda',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.health_and_safety_rounded, size: 28),
-            label: 'Safety Updates',
-          ),
-          BottomNavigationBarItem(
-            icon: Image(
-              image: AssetImage('assets/images/quick-hazard.png'),
-              height: 30,
+      height: 122,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned.fill(
+            top: 27,
+            child: Container(
+              decoration: BoxDecoration(
+                color:
+                    Theme.of(context).bottomAppBarTheme.color ?? Colors.white,
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x1A0F172A),
+                    blurRadius: 18,
+                    offset: Offset(0, -4),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                top: false,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _bottomItem(
+                        index: 0,
+                        icon: Icons.home_rounded,
+                        label: 'Beranda',
+                      ),
+                    ),
+                    Expanded(
+                      child: _bottomItem(
+                        index: 1,
+                        icon: Icons.health_and_safety_rounded,
+                        label: 'Safety Updates',
+                      ),
+                    ),
+                    const Expanded(child: SizedBox()),
+                    Expanded(
+                      child: _bottomItem(
+                        index: 3,
+                        icon: Icons.person_rounded,
+                        label: 'Profil',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            label: 'Quick Hazard',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person, size: 28),
-            label: 'Profil',
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Semantics(
+                button: true,
+                label: 'Quick Hazard',
+                child: InkWell(
+                  onTap: _openQuickHazard,
+                  customBorder: const CircleBorder(),
+                  child: Container(
+                    width: 70,
+                    height: 70,
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 3),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x401D4ED8),
+                          blurRadius: 16,
+                          offset: Offset(0, 7),
+                        ),
+                      ],
+                    ),
+                    child: Image.asset(
+                      'assets/images/quick-hazard.png',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
-        currentIndex: _currentPage,
-        selectedLabelStyle: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-        ),
-        unselectedLabelStyle: const TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w500,
-        ),
-        onTap: (index) {
-          if (index == 2) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const HazardFormPage(),
-              ),
-            );
-            return;
-          }
-          _pageCtrl.animateToPage(
-            index,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.ease,
-          );
-        },
       ),
+    );
+  }
+
+  Widget _bottomItem({
+    required int index,
+    required IconData icon,
+    required String label,
+  }) {
+    final selected = _currentPage == index;
+    final color = selected
+        ? Theme.of(context).colorScheme.primary
+        : const Color(0xFF667085);
+
+    return InkWell(
+      onTap: () {
+        _pageCtrl.animateToPage(
+          index,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.only(top: 10),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 27, color: color),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: color,
+                fontSize: 10,
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openQuickHazard() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const HazardFormPage()),
     );
   }
 }
