@@ -158,7 +158,7 @@ class _TopBarState extends State<TopBar> {
             color: Colors.black45,
           ),
           onPressed: () async {
-            globals.currentPage = 3;
+            globals.currentPage = 4;
             await Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(builder: (context) => const HomePage()),

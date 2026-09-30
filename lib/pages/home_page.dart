@@ -12,6 +12,7 @@ import 'dashboard_page.dart';
 import 'hazard/hazard_form_page.dart';
 import 'profile_page.dart';
 import 'safety_updates_page.dart';
+import 'scan_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -107,6 +108,7 @@ class _HomePageState extends State<HomePage> {
             DashboardPage(),
             SafetyUpdatesPage(),
             SizedBox.shrink(),
+            ScanPage(),
             ProfilePage(),
           ],
         ),
@@ -169,16 +171,28 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     Expanded(
-                      child: _bottomItem(
-                        index: 1,
-                        icon: Icons.health_and_safety_rounded,
-                        label: 'Safety Updates',
+                      child: Transform.translate(
+                        offset: const Offset(-8, 0),
+                        child: _bottomItem(
+                          index: 1,
+                          icon: Icons.health_and_safety_rounded,
+                          label: 'Safety Updates',
+                        ),
                       ),
                     ),
-                    const Expanded(child: SizedBox()),
+                    Expanded(
+                      child: Transform.translate(
+                        offset: const Offset(8, 0),
+                        child: _bottomItem(
+                          index: 3,
+                          icon: Icons.qr_code_scanner_rounded,
+                          label: 'Scan',
+                        ),
+                      ),
+                    ),
                     Expanded(
                       child: _bottomItem(
-                        index: 3,
+                        index: 4,
                         icon: Icons.person_rounded,
                         label: 'Profil',
                       ),
