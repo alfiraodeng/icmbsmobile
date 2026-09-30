@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../services/database.dart';
 import '../../services/preference.dart';
 import '../../widgets/top_bar.dart';
 
@@ -462,13 +463,7 @@ class _DriverPerformanceAssessmentPageState
   final _routeController = TextEditingController();
   final _vehicleController = TextEditingController();
   final _notesController = TextEditingController();
-
-  final List<String> _drivers = [
-    'Irfan Setiawan',
-    'Rudi Hartono',
-    'Agus Firmansyah',
-    'Bambang Prasetyo',
-  ];
+  final _db = DatabaseService();
 
   static const _sections = <_DpaSection>[
     _DpaSection(
@@ -498,7 +493,7 @@ class _DriverPerformanceAssessmentPageState
   ];
 
   final Map<String, int> _ratings = {};
-  String? _selectedDriver;
+  _DpaDriver? _selectedDriver;
   String? _tripType;
   DateTime _assessmentDate = DateTime.now();
   final Set<int> _expandedSections = {1, 2};
@@ -521,55 +516,173 @@ class _DriverPerformanceAssessmentPageState
     if (value != null) setState(() => _assessmentDate = value);
   }
 
-  Future<void> _addDriver() async {
-    final controller = TextEditingController();
-    final value = await showDialog<String>(
+  Future<void> _selectDriver() async {
+    final rows = await _db.rawQuery('''select
+      e.id,
+      e.no_nik,
+      e.nama_lengkap,
+      e.posisi
+    from employees e
+    where e.deleted_at is null
+      and e.no_nik is not null
+      and e.nama_lengkap is not null
+    order by e.no_nik''');
+    if (!mounted) return;
+
+    final drivers = rows
+        .map((row) => _DpaDriver(
+              id: row['id'] as int,
+              nik: '${row['no_nik']}',
+              name: '${row['nama_lengkap']}',
+              position: row['posisi'] == null ? '' : '${row['posisi']}',
+            ))
+        .toList();
+    var query = '';
+    final value = await showModalBottomSheet<_DpaDriver>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Tambah Driver'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(
-            labelText: 'Nama lengkap driver',
-            hintText: 'Contoh: Andi Saputra',
-            prefixIcon: Icon(Icons.person_add_alt_1_rounded),
-            border: OutlineInputBorder(),
-          ),
-          onSubmitted: (value) {
-            if (value.trim().isNotEmpty) Navigator.pop(context, value.trim());
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (controller.text.trim().isNotEmpty) {
-                Navigator.pop(context, controller.text.trim());
-              }
-            },
-            child: const Text('Simpan Driver'),
-          ),
-        ],
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final keyword = query.toLowerCase();
+          final filtered = drivers.where((driver) {
+            return driver.nik.toLowerCase().contains(keyword) ||
+                driver.name.toLowerCase().contains(keyword);
+          }).toList();
+          return FractionallySizedBox(
+            heightFactor: .86,
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 5,
+                    margin: const EdgeInsets.only(top: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.blueGrey.shade200,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 16, 10, 10),
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Pilih Driver dari Data Karyawan',
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w800)),
+                              SizedBox(height: 3),
+                              Text('Cari menggunakan NIK atau nama karyawan',
+                                  style: TextStyle(
+                                      color: Colors.black54, fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close_rounded),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 4, 18, 12),
+                    child: TextField(
+                      autofocus: true,
+                      keyboardType: TextInputType.text,
+                      decoration: _dpaInputDecoration(
+                        hint: 'Ketik NIK karyawan...',
+                        icon: Icons.badge_rounded,
+                      ),
+                      onChanged: (value) =>
+                          setModalState(() => query = value.trim()),
+                    ),
+                  ),
+                  Expanded(
+                    child: drivers.isEmpty
+                        ? const _DpaDriverEmptyState(
+                            icon: Icons.cloud_off_rounded,
+                            title: 'Data karyawan belum tersedia',
+                            message:
+                                'Sinkronkan master data terlebih dahulu agar NIK driver dapat dipilih.',
+                          )
+                        : filtered.isEmpty
+                            ? const _DpaDriverEmptyState(
+                                icon: Icons.person_search_rounded,
+                                title: 'NIK tidak ditemukan',
+                                message:
+                                    'Periksa kembali NIK atau cari menggunakan nama karyawan.',
+                              )
+                            : ListView.separated(
+                                padding:
+                                    const EdgeInsets.fromLTRB(18, 0, 18, 24),
+                                itemCount: filtered.length,
+                                separatorBuilder: (context, index) =>
+                                    const Divider(height: 1),
+                                itemBuilder: (context, index) {
+                                  final driver = filtered[index];
+                                  final selected =
+                                      driver.id == _selectedDriver?.id;
+                                  return ListTile(
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 4, vertical: 5),
+                                    leading: CircleAvatar(
+                                      backgroundColor: selected
+                                          ? const Color(0xFF1769E8)
+                                          : const Color(0xFFEAF2FF),
+                                      child: Icon(Icons.person_rounded,
+                                          color: selected
+                                              ? Colors.white
+                                              : const Color(0xFF1769E8)),
+                                    ),
+                                    title: Text(driver.nik,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w800)),
+                                    subtitle: Text([
+                                      driver.name,
+                                      if (driver.position.isNotEmpty)
+                                        driver.position,
+                                    ].join(' • ')),
+                                    trailing: selected
+                                        ? const Icon(Icons.check_circle_rounded,
+                                            color: Color(0xFF16A34A))
+                                        : const Icon(
+                                            Icons.chevron_right_rounded),
+                                    onTap: () => Navigator.pop(context, driver),
+                                  );
+                                },
+                              ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
-    controller.dispose();
     if (value == null || !mounted) return;
-    setState(() {
-      if (!_drivers
-          .any((driver) => driver.toLowerCase() == value.toLowerCase())) {
-        _drivers.add(value);
-      }
-      _selectedDriver = value;
-    });
+    setState(() => _selectedDriver = value);
   }
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
+    if (_selectedDriver == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pilih NIK driver terlebih dahulu.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
     final missing = _sections
         .expand((section) => section.questions)
         .where((question) => !_ratings.containsKey(question))
@@ -593,7 +706,7 @@ class _DriverPerformanceAssessmentPageState
             color: Color(0xFF16A34A), size: 52),
         title: const Text('Penilaian Tersimpan'),
         content: Text(
-          'Penilaian $_selectedDriver berhasil disimpan dengan nilai $score/100. Data ini masih tersimpan sebagai mockup dan siap disambungkan ke database.',
+          'Penilaian ${_selectedDriver!.name} (${_selectedDriver!.nik}) berhasil disimpan dengan nilai $score/100. Data ini masih tersimpan sebagai mockup dan siap disambungkan ke database.',
           textAlign: TextAlign.center,
         ),
         actionsAlignment: MainAxisAlignment.center,
@@ -650,10 +763,15 @@ class _DriverPerformanceAssessmentPageState
                     label: 'Nama Driver',
                     required: true,
                     action: OutlinedButton.icon(
-                      onPressed: _addDriver,
-                      icon: const Icon(Icons.add_circle_outline_rounded,
+                      onPressed: _selectDriver,
+                      icon: Icon(
+                          _selectedDriver == null
+                              ? Icons.person_search_rounded
+                              : Icons.swap_horiz_rounded,
                           size: 17),
-                      label: const Text('Add Driver'),
+                      label: Text(_selectedDriver == null
+                          ? 'Add Driver'
+                          : 'Ganti Driver'),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 7),
@@ -663,25 +781,51 @@ class _DriverPerformanceAssessmentPageState
                       ),
                     ),
                     helper:
-                        'Pilih dari database/master. Nama baru dapat ditambahkan melalui Add Driver.',
-                    child: DropdownButtonFormField<String>(
-                      key: ValueKey(_selectedDriver),
-                      initialValue: _selectedDriver,
-                      decoration: _dpaInputDecoration(
-                        hint: 'Cari atau pilih driver...',
-                        icon: Icons.contact_page_rounded,
+                        'Driver diambil langsung dari master karyawan berdasarkan NIK.',
+                    child: InkWell(
+                      onTap: _selectDriver,
+                      borderRadius: BorderRadius.circular(13),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 13),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0F4F9),
+                          borderRadius: BorderRadius.circular(13),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.badge_rounded,
+                                color: Color(0xFF1769E8), size: 21),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _selectedDriver == null
+                                  ? Text('Belum ada driver dipilih',
+                                      style: TextStyle(
+                                          color: Colors.blueGrey.shade400,
+                                          fontSize: 13))
+                                  : Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(_selectedDriver!.nik,
+                                            style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Color(0xFF1769E8),
+                                                fontWeight: FontWeight.w800)),
+                                        const SizedBox(height: 2),
+                                        Text(_selectedDriver!.name,
+                                            style: const TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w700)),
+                                      ],
+                                    ),
+                            ),
+                            const Icon(Icons.chevron_right_rounded,
+                                color: Colors.black45),
+                          ],
+                        ),
                       ),
-                      items: _drivers
-                          .map((driver) => DropdownMenuItem(
-                                value: driver,
-                                child: Text(driver),
-                              ))
-                          .toList(),
-                      onChanged: (value) =>
-                          setState(() => _selectedDriver = value),
-                      validator: (value) => value == null
-                          ? 'Pilih atau tambahkan nama driver'
-                          : null,
                     ),
                   ),
                   _DpaLabeledField(
@@ -859,6 +1003,59 @@ class _DpaSection {
   final String title;
   final Color color;
   final List<String> questions;
+}
+
+class _DpaDriver {
+  const _DpaDriver({
+    required this.id,
+    required this.nik,
+    required this.name,
+    required this.position,
+  });
+
+  final int id;
+  final String nik;
+  final String name;
+  final String position;
+}
+
+class _DpaDriverEmptyState extends StatelessWidget {
+  const _DpaDriverEmptyState({
+    required this.icon,
+    required this.title,
+    required this.message,
+  });
+
+  final IconData icon;
+  final String title;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 54, color: Colors.blueGrey.shade300),
+            const SizedBox(height: 14),
+            Text(title,
+                textAlign: TextAlign.center,
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 7),
+            Text(message,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    color: Colors.blueGrey.shade500,
+                    fontSize: 12,
+                    height: 1.4)),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _DpaInfoBanner extends StatelessWidget {
