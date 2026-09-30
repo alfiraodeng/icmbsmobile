@@ -11,6 +11,84 @@ import 'menu/extra_page.dart';
 import 'menu/ohs_page.dart';
 import 'menu/sap_page.dart';
 
+class _HomeModuleCard extends StatelessWidget {
+  const _HomeModuleCard({
+    required this.title,
+    required this.imagePath,
+    required this.labelColor,
+    required this.onTap,
+    this.iconHeight = 68,
+  });
+
+  final String title;
+  final String imagePath;
+  final Color labelColor;
+  final VoidCallback onTap;
+  final double iconHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          height: 126,
+          padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFFD9E1F2)),
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF1E3A8A).withValues(alpha: .06),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Expanded(
+                child: Center(
+                  child: Image.asset(
+                    imagePath,
+                    height: iconHeight,
+                    width: 82,
+                    fit: BoxFit.contain,
+                    filterQuality: FilterQuality.high,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 5),
+              SizedBox(
+                height: 32,
+                child: Center(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      title,
+                      maxLines: 2,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        height: 1.05,
+                        fontWeight: FontWeight.w800,
+                        color: labelColor,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
@@ -152,131 +230,56 @@ class _DashboardPageState extends State<DashboardPage> {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 15, 20, 10),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  InkWell(
-                    child: Container(
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: Colors.white54,
-                        border: Border.all(color: Colors.indigo.shade200),
-                        borderRadius:
-                            const BorderRadius.all(Radius.circular(20)),
-                      ),
-                      width: 100,
-                      height: 100,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Image.asset(
-                            'assets/images/sap.png',
-                            fit: BoxFit.fitHeight,
-                            height: 55,
+                  Expanded(
+                    child: _HomeModuleCard(
+                      title: 'SAP',
+                      imagePath: 'assets/images/home-sap.png',
+                      labelColor: const Color(0xFF174B83),
+                      iconHeight: 70,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            fullscreenDialog: true,
+                            builder: (context) => const SapPage(),
                           ),
-                          const SizedBox(height: 3),
-                          const Text(
-                            'SAP',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.blue,
-                            ),
-                          ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          fullscreenDialog: true,
-                          builder: (context) => const SapPage(),
-                        ),
-                      );
-                    },
                   ),
-                  InkWell(
-                    child: Container(
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: Colors.white54,
-                        border: Border.all(color: Colors.indigo.shade200),
-                        borderRadius:
-                            const BorderRadius.all(Radius.circular(20)),
-                      ),
-                      width: 100,
-                      height: 100,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Image.asset(
-                            'assets/images/ohs.png',
-                            fit: BoxFit.fitHeight,
-                            height: 55,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _HomeModuleCard(
+                      title: 'OHS',
+                      imagePath: 'assets/images/home-ohs.png',
+                      labelColor: const Color(0xFF0F9F8F),
+                      iconHeight: 72,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            fullscreenDialog: true,
+                            builder: (context) => const OhsPage(),
                           ),
-                          const SizedBox(height: 3),
-                          const Text(
-                            'OHS',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.teal,
-                            ),
-                          ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          fullscreenDialog: true,
-                          builder: (context) => const OhsPage(),
-                        ),
-                      );
-                    },
                   ),
-                  InkWell(
-                    child: Container(
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: Colors.white54,
-                        border: Border.all(color: Colors.indigo.shade200),
-                        borderRadius:
-                            const BorderRadius.all(Radius.circular(20)),
-                      ),
-                      width: 100,
-                      height: 100,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Image.asset(
-                            'assets/images/extras.png',
-                            fit: BoxFit.fitHeight,
-                            height: 55,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _HomeModuleCard(
+                      title: 'PERFORMANCE\nHUB',
+                      imagePath: 'assets/images/home-performance-hub.png',
+                      labelColor: const Color(0xFFF08A00),
+                      iconHeight: 66,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            fullscreenDialog: true,
+                            builder: (context) => const ExtraPage(),
                           ),
-                          const SizedBox(height: 3),
-                          const Text(
-                            'Performance\nHub',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.orange,
-                            ),
-                          ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          fullscreenDialog: true,
-                          builder: (context) => const ExtraPage(),
-                        ),
-                      );
-                    },
                   ),
                 ],
               ),
