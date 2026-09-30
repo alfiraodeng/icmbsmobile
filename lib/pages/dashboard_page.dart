@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../models/link_model.dart';
@@ -115,6 +116,11 @@ class _DashboardPageState extends State<DashboardPage> {
     _hazardMapCtrl
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(Colors.transparent)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageFinished: (_) => _showCurrentPositionOnMap(),
+        ),
+      )
       ..loadHtmlString(_hazardMapHtml());
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -124,6 +130,29 @@ class _DashboardPageState extends State<DashboardPage> {
         }.toList());
       });
     });
+  }
+
+  Future<void> _showCurrentPositionOnMap() async {
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) return;
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      await _hazardMapCtrl.runJavaScript(
+        'window.setUserLocation(${position.latitude}, ${position.longitude}, ${position.accuracy});',
+      );
+    } catch (error) {
+      debugPrint('Gagal menampilkan posisi pengguna pada heatmap: $error');
+    }
   }
 
   @override
@@ -422,6 +451,44 @@ class _DashboardPageState extends State<DashboardPage> {
           border-radius: 50%;
           display: inline-block;
         }
+        .user-location-pin {
+          width: 22px;
+          height: 22px;
+          border: 4px solid #ffffff;
+          border-radius: 50%;
+          background: #2563eb;
+          box-shadow: 0 0 0 8px rgba(37, 99, 235, .22), 0 4px 12px rgba(15, 23, 42, .28);
+          position: relative;
+        }
+        .user-location-pin::after {
+          content: '';
+          position: absolute;
+          inset: -10px;
+          border: 2px solid rgba(37, 99, 235, .45);
+          border-radius: 50%;
+          animation: userPulse 1.8s ease-out infinite;
+        }
+        @keyframes userPulse {
+          0% { transform: scale(.65); opacity: 1; }
+          100% { transform: scale(1.7); opacity: 0; }
+        }
+        .locate-me-button {
+          width: 38px;
+          height: 38px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #ffffff;
+          color: #2563eb;
+          font-size: 22px;
+          font-weight: 800;
+          text-decoration: none;
+          border-radius: 10px;
+          box-shadow: 0 8px 20px rgba(15, 23, 42, .16);
+        }
+        .locate-me-button:active {
+          background: #eff6ff;
+        }
       </style>
     </head>
     <body>
@@ -518,6 +585,63 @@ class _DashboardPageState extends State<DashboardPage> {
 
         const heatLayer = L.layerGroup().addTo(map);
         const markerLayer = L.layerGroup().addTo(map);
+        let userMarker = null;
+        let userAccuracyCircle = null;
+        let userCoordinates = null;
+
+        window.setUserLocation = function(lat, lng, accuracy) {
+          userCoordinates = [lat, lng];
+          if (userMarker) map.removeLayer(userMarker);
+          if (userAccuracyCircle) map.removeLayer(userAccuracyCircle);
+
+          const userIcon = L.divIcon({
+            className: '',
+            html: '<div class="user-location-pin"></div>',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+          });
+          userAccuracyCircle = L.circle(userCoordinates, {
+            radius: Math.max(accuracy || 10, 10),
+            color: '#2563eb',
+            weight: 1,
+            fillColor: '#60a5fa',
+            fillOpacity: .12
+          }).addTo(map);
+          userMarker = L.marker(userCoordinates, {
+            icon: userIcon,
+            zIndexOffset: 1000
+          }).addTo(map);
+          userMarker.bindPopup(`
+            <div style="min-width:170px">
+              <strong style="font-size:14px;color:#1d4ed8">Posisi Saya</strong>
+              <p style="margin:7px 0 2px;font-size:12px;color:#4b5563">Lokasi perangkat saat ini</p>
+              <p style="margin:2px 0;font-size:11px;color:#64748b">${lat.toFixed(6)}, ${lng.toFixed(6)}</p>
+              <p style="margin:2px 0;font-size:11px;color:#64748b">Akurasi ±${Math.round(accuracy || 0)} meter</p>
+            </div>
+          `);
+          map.flyTo(userCoordinates, 15, { animate: true, duration: .8 });
+          setTimeout(() => userMarker.openPopup(), 850);
+        };
+
+        const LocateMeControl = L.Control.extend({
+          options: { position: 'topright' },
+          onAdd: function() {
+            const button = L.DomUtil.create('a', 'locate-me-button');
+            button.href = '#';
+            button.title = 'Lihat Posisi Saya';
+            button.innerHTML = '⌖';
+            L.DomEvent.disableClickPropagation(button);
+            L.DomEvent.on(button, 'click', function(event) {
+              L.DomEvent.preventDefault(event);
+              if (userCoordinates) {
+                map.flyTo(userCoordinates, 16, { animate: true, duration: .7 });
+                if (userMarker) setTimeout(() => userMarker.openPopup(), 700);
+              }
+            });
+            return button;
+          }
+        });
+        map.addControl(new LocateMeControl());
 
         hazardPoints.forEach((point) => {
           L.circle([point.lat, point.lng], {
