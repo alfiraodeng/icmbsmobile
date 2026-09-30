@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../models/file_model.dart';
 import '../../models/inspect_detail_model.dart';
 import '../../models/inspect_tran_model.dart';
 import '../../services/api.dart';
@@ -15,10 +16,16 @@ import '../../widgets/top_bar.dart';
 import 'simama_checkitem_page.dart';
 
 class SimamaChecklistPage extends StatefulWidget {
-  const SimamaChecklistPage(this.module, {this.inspectTrnModel, super.key});
+  const SimamaChecklistPage(
+    this.module, {
+    this.inspectTrnModel,
+    this.eventImages = const [],
+    super.key,
+  });
 
   final Module module;
   final InspectTrnModel? inspectTrnModel;
+  final List<String> eventImages;
 
   @override
   State<SimamaChecklistPage> createState() => _SimamaChecklistPageState();
@@ -271,12 +278,26 @@ class _SimamaChecklistPageState extends State<SimamaChecklistPage> {
                         if (tranId > 0) {
                           syncTran(_db, _api, 'inspection', tranId)
                               .then((sync) {
+                            if (!mounted) return;
                             if (sync == true) {
-                              SnackBarMsg.success(context, 'Berhasil sinkron!');
+                              SnackBarMsg.success(
+                                  this.context, 'Berhasil sinkron!');
                             } else {
-                              SnackBarMsg.danger(context, 'Gagal sinkron!');
+                              SnackBarMsg.danger(
+                                  this.context, 'Gagal sinkron!');
                             }
                           });
+                          for (final path in widget.eventImages.skip(1)) {
+                            _db.insert(
+                              'files',
+                              FileModel(
+                                name: path,
+                                type: 'SimamaForm',
+                                pointId: 0,
+                                tranId: tranId,
+                              ).toJson(),
+                            );
+                          }
                           for (var row in _checkList) {
                             row.tranId = tranId;
                             row.status = (row.yesno == 0) ? 0 : 1;
@@ -289,14 +310,18 @@ class _SimamaChecklistPageState extends State<SimamaChecklistPage> {
                                   tranId, itemId);
                             });
                           }
-                          alertSuccess(context, widget.module, lastId: tranId);
+                          if (!mounted) return;
+                          alertSuccess(this.context, widget.module,
+                              lastId: tranId);
                         } else {
-                          alertFailed(context, widget.module);
+                          if (!mounted) return;
+                          alertFailed(this.context, widget.module);
                         }
                       });
                     } catch (e) {
                       debugPrint(e.toString());
-                      alertFailed(context, widget.module);
+                      if (!mounted) return;
+                      alertFailed(this.context, widget.module);
                     }
                   },
           ),

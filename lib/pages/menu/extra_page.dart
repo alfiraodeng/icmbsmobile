@@ -71,14 +71,20 @@ class _ExtraPageState extends State<ExtraPage> {
                         ),
                       ),
                     const SizedBox(height: 8),
-                    Text(
-                      listMenuExtra[index].title,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.black87,
-                        fontWeight: FontWeight.w400,
+                    SizedBox(
+                      width: double.infinity,
+                      child: Text(
+                        listMenuExtra[index].title,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w500,
+                          height: 1.15,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
                       ),
-                      textAlign: TextAlign.center,
                     )
                   ],
                 ),

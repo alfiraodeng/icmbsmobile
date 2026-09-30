@@ -29,6 +29,7 @@ class _SimamaFormPageState extends State<SimamaFormPage> {
   final _scrollCtrl = ScrollController();
   final _db = DatabaseService();
   final _profile = PreferenceService.getProfile();
+  final _summary = TextEditingController();
   final List<dynamic> _rawData = [];
   final List<MapEntry<int, dynamic>> _inspektorList = [];
   final List<MapEntry<int, dynamic>> _areaList = [];
@@ -49,7 +50,9 @@ class _SimamaFormPageState extends State<SimamaFormPage> {
   VideoPlayerController? _videoPlayer;
   File? _videoFile;
   bool _isVideo = false;
-  String? _eventImage;
+  final List<String> _eventImages = [];
+
+  String? get _eventImage => _eventImages.isEmpty ? null : _eventImages.first;
 
   @override
   void initState() {
@@ -102,9 +105,34 @@ class _SimamaFormPageState extends State<SimamaFormPage> {
 
   @override
   void dispose() {
-    /** */
+    _summary.dispose();
 
     super.dispose();
+  }
+
+  void _addEventImage(String path) {
+    if (path.isEmpty) return;
+    setState(() {
+      if (!_eventImages.contains(path)) {
+        _eventImages.add(path);
+      }
+    });
+  }
+
+  void _removeEventImage(String path) {
+    setState(() => _eventImages.remove(path));
+  }
+
+  Future<void> _pickMultipleEventImages() async {
+    final images = await ImagePicker().pickMultiImage(imageQuality: 80);
+    if (images.isEmpty) return;
+    setState(() {
+      for (final image in images) {
+        if (!_eventImages.contains(image.path)) {
+          _eventImages.add(image.path);
+        }
+      }
+    });
   }
 
   @override
@@ -479,24 +507,18 @@ class _SimamaFormPageState extends State<SimamaFormPage> {
                                   pickImage(source: ImageSource.camera);
                               imageFile.then((value) {
                                 if (value != null) {
-                                  setState(() => _eventImage = value.path);
+                                  _addEventImage(value.path);
                                 }
                               });
                             },
                           ),
                           ListTile(
-                            leading:
-                                const Icon(Icons.image, color: Colors.grey),
-                            title: const Text('Gallery'),
+                            leading: const Icon(Icons.collections,
+                                color: Colors.grey),
+                            title: const Text('Gallery Multi Foto'),
                             onTap: () {
                               Navigator.pop(context);
-                              Future<File?> imageFile =
-                                  pickImage(source: ImageSource.gallery);
-                              imageFile.then((value) {
-                                if (value != null) {
-                                  setState(() => _eventImage = value.path);
-                                }
-                              });
+                              _pickMultipleEventImages();
                             },
                           ),
                         ],
@@ -506,12 +528,12 @@ class _SimamaFormPageState extends State<SimamaFormPage> {
                 },
                 child: Container(
                   width: MediaQuery.of(context).size.width,
-                  height: 150,
+                  height: _eventImages.isEmpty ? 150 : 178,
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: _eventImage == null || _eventImage == ''
+                  child: _eventImages.isEmpty
                       ? const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -527,10 +549,127 @@ class _SimamaFormPageState extends State<SimamaFormPage> {
                                 fontWeight: FontWeight.w400,
                               ),
                             ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Bisa lebih dari 1 foto',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey,
+                              ),
+                            ),
                           ],
                         )
-                      : Image.file(File(_eventImage!)),
+                      : Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    '${_eventImages.length} foto dipilih',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Tap untuk tambah',
+                                    style: TextStyle(
+                                      color: Colors.indigo.shade400,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              Expanded(
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: _eventImages.length,
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(width: 10),
+                                  itemBuilder: (context, index) {
+                                    final path = _eventImages[index];
+                                    return Stack(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          child: Image.file(
+                                            File(path),
+                                            width: 115,
+                                            height: 115,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                        Positioned(
+                                          top: 4,
+                                          right: 4,
+                                          child: InkWell(
+                                            onTap: () =>
+                                                _removeEventImage(path),
+                                            child: Container(
+                                              padding: const EdgeInsets.all(4),
+                                              decoration: const BoxDecoration(
+                                                color: Colors.black54,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Icon(
+                                                Icons.close,
+                                                color: Colors.white,
+                                                size: 16,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                 ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: _pickMultipleEventImages,
+                  icon: const Icon(Icons.add_photo_alternate_rounded),
+                  label: const Text('Tambah Foto dari Gallery'),
+                ),
+              ),
+              const SizedBox(height: 15),
+              const Text(
+                'Kesimpulan Si Mama',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _summary,
+                minLines: 3,
+                maxLines: 5,
+                decoration: InputDecoration(
+                  hintText:
+                      'Tulis ringkasan hasil sidak, kondisi utama, dan arahan tindak lanjut...',
+                  prefixIcon: Padding(
+                    padding: const EdgeInsets.only(left: 10),
+                    child: Icon(
+                      Icons.summarize_rounded,
+                      size: 24,
+                      color: Colors.indigo.shade400,
+                    ),
+                  ),
+                ),
+                style: const TextStyle(fontSize: 16),
+                onChanged: (String val) => setState(() {}),
               ),
               const SizedBox(height: 15),
               Visibility(
@@ -677,8 +816,7 @@ class _SimamaFormPageState extends State<SimamaFormPage> {
           child: buttonApp(
             label: 'Lanjut',
             onPressed: (_areaId == null ||
-                    _eventImage == null ||
-                    _eventImage == '' ||
+                    _eventImages.isEmpty ||
                     (_inspektorId1 == null &&
                         _inspektorId2 == null &&
                         _inspektorId3 == null &&
@@ -705,7 +843,9 @@ class _SimamaFormPageState extends State<SimamaFormPage> {
                             date: _date!.toString().substring(0, 10),
                             time: _time!,
                             dangerLevel: 'c',
-                            remark: 'Sidak Malam Management',
+                            remark: _summary.text.trim().isEmpty
+                                ? 'Sidak Malam Management'
+                                : _summary.text.trim(),
                             video: _videoFile != null ? _videoFile!.path : '',
                             createdAt: DateTime.now().toString(),
                             updatedAt: DateTime.now().toString(),
@@ -719,6 +859,7 @@ class _SimamaFormPageState extends State<SimamaFormPage> {
                             pjaId: null,
                             status: 0,
                           ),
+                          eventImages: List<String>.from(_eventImages),
                         ),
                       ),
                     );

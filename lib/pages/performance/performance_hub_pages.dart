@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
+import '../../services/preference.dart';
 import '../../widgets/top_bar.dart';
 
 class AchievementSapPage extends StatelessWidget {
@@ -446,62 +448,762 @@ class ActionTrackerPage extends StatelessWidget {
   }
 }
 
-class DriverPerformanceAssessmentPage extends StatelessWidget {
+class DriverPerformanceAssessmentPage extends StatefulWidget {
   const DriverPerformanceAssessmentPage({super.key});
 
   @override
+  State<DriverPerformanceAssessmentPage> createState() =>
+      _DriverPerformanceAssessmentPageState();
+}
+
+class _DriverPerformanceAssessmentPageState
+    extends State<DriverPerformanceAssessmentPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _routeController = TextEditingController();
+  final _vehicleController = TextEditingController();
+  final _notesController = TextEditingController();
+
+  final List<String> _drivers = [
+    'Irfan Setiawan',
+    'Rudi Hartono',
+    'Agus Firmansyah',
+    'Bambang Prasetyo',
+  ];
+
+  static const _sections = <_DpaSection>[
+    _DpaSection(
+      number: 1,
+      title: 'Safety & Skill Driving',
+      color: Color(0xFFF97316),
+      questions: [
+        'Bagaimana kemampuan driver menjaga kecepatan yang aman selama perjalanan?',
+        'Bagaimana kemampuan driver mengantisipasi kondisi jalan dan potensi bahaya?',
+        'Bagaimana kemampuan driver melakukan pengereman dan akselerasi secara halus?',
+        'Bagaimana kemampuan driver menjaga fokus dan konsentrasi selama perjalanan?',
+        'Bagaimana kemampuan driver mengendalikan kendaraan dalam berbagai kondisi jalan?',
+      ],
+    ),
+    _DpaSection(
+      number: 2,
+      title: 'Behavior & Service',
+      color: Color(0xFF6366F1),
+      questions: [
+        'Bagaimana kedisiplinan driver terhadap waktu keberangkatan dan jadwal perjalanan?',
+        'Bagaimana sikap, keramahan, dan komunikasi driver kepada penumpang?',
+        'Bagaimana kepatuhan driver terhadap peraturan lalu lintas dan prosedur perusahaan?',
+        'Bagaimana kepedulian driver terhadap kenyamanan dan keselamatan penumpang?',
+        'Bagaimana kebersihan diri, kabin, dan kendaraan yang digunakan?',
+      ],
+    ),
+  ];
+
+  final Map<String, int> _ratings = {};
+  String? _selectedDriver;
+  String? _tripType;
+  DateTime _assessmentDate = DateTime.now();
+  final Set<int> _expandedSections = {1, 2};
+
+  @override
+  void dispose() {
+    _routeController.dispose();
+    _vehicleController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickDate() async {
+    final value = await showDatePicker(
+      context: context,
+      initialDate: _assessmentDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+    );
+    if (value != null) setState(() => _assessmentDate = value);
+  }
+
+  Future<void> _addDriver() async {
+    final controller = TextEditingController();
+    final value = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Tambah Driver'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+          decoration: const InputDecoration(
+            labelText: 'Nama lengkap driver',
+            hintText: 'Contoh: Andi Saputra',
+            prefixIcon: Icon(Icons.person_add_alt_1_rounded),
+            border: OutlineInputBorder(),
+          ),
+          onSubmitted: (value) {
+            if (value.trim().isNotEmpty) Navigator.pop(context, value.trim());
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (controller.text.trim().isNotEmpty) {
+                Navigator.pop(context, controller.text.trim());
+              }
+            },
+            child: const Text('Simpan Driver'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (value == null || !mounted) return;
+    setState(() {
+      if (!_drivers
+          .any((driver) => driver.toLowerCase() == value.toLowerCase())) {
+        _drivers.add(value);
+      }
+      _selectedDriver = value;
+    });
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    final missing = _sections
+        .expand((section) => section.questions)
+        .where((question) => !_ratings.containsKey(question))
+        .length;
+    if (missing > 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lengkapi $missing penilaian driver terlebih dahulu.'),
+          backgroundColor: Colors.orange.shade800,
+        ),
+      );
+      return;
+    }
+
+    final total = _ratings.values.fold<int>(0, (sum, score) => sum + score);
+    final score = (total / (_ratings.length * 5) * 100).round();
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: const Icon(Icons.check_circle_rounded,
+            color: Color(0xFF16A34A), size: 52),
+        title: const Text('Penilaian Tersimpan'),
+        content: Text(
+          'Penilaian $_selectedDriver berhasil disimpan dengan nilai $score/100. Data ini masih tersimpan sebagai mockup dan siap disambungkan ke database.',
+          textAlign: TextAlign.center,
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Selesai'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const _MockScaffold(
-      title: 'DPA',
+    final profile = PreferenceService.getProfile();
+    final assessorNik = profile?.noNik?.trim().isNotEmpty == true
+        ? profile!.noNik!
+        : '24011950928';
+    final assessorName = profile?.namaLengkap?.trim().isNotEmpty == true
+        ? profile!.namaLengkap!
+        : 'MUHAMMAD ALFIAN YUSTIANDA';
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF7F9FC),
+      appBar: const TopBar(title: 'Driver Performance Assessment'),
+      body: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _DpaInfoBanner(),
+              const SizedBox(height: 18),
+              _DpaTwoColumn(
+                children: [
+                  _DpaReadOnlyField(
+                    label: 'NIK Penilai',
+                    value: assessorNik,
+                    icon: Icons.badge_rounded,
+                  ),
+                  _DpaReadOnlyField(
+                    label: 'Nama Penilai',
+                    value: assessorName,
+                    icon: Icons.person_rounded,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _DpaTwoColumn(
+                children: [
+                  _DpaLabeledField(
+                    label: 'Nama Driver',
+                    required: true,
+                    action: OutlinedButton.icon(
+                      onPressed: _addDriver,
+                      icon: const Icon(Icons.add_circle_outline_rounded,
+                          size: 17),
+                      label: const Text('Add Driver'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 7),
+                        foregroundColor: const Color(0xFF16864B),
+                        side: const BorderSide(color: Color(0xFF16864B)),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
+                    helper:
+                        'Pilih dari database/master. Nama baru dapat ditambahkan melalui Add Driver.',
+                    child: DropdownButtonFormField<String>(
+                      key: ValueKey(_selectedDriver),
+                      initialValue: _selectedDriver,
+                      decoration: _dpaInputDecoration(
+                        hint: 'Cari atau pilih driver...',
+                        icon: Icons.contact_page_rounded,
+                      ),
+                      items: _drivers
+                          .map((driver) => DropdownMenuItem(
+                                value: driver,
+                                child: Text(driver),
+                              ))
+                          .toList(),
+                      onChanged: (value) =>
+                          setState(() => _selectedDriver = value),
+                      validator: (value) => value == null
+                          ? 'Pilih atau tambahkan nama driver'
+                          : null,
+                    ),
+                  ),
+                  _DpaLabeledField(
+                    label: 'Tanggal Penilaian',
+                    required: true,
+                    child: InkWell(
+                      onTap: _pickDate,
+                      borderRadius: BorderRadius.circular(13),
+                      child: InputDecorator(
+                        decoration: _dpaInputDecoration(
+                          hint: '',
+                          icon: Icons.calendar_month_rounded,
+                          suffixIcon:
+                              const Icon(Icons.date_range_rounded, size: 19),
+                        ),
+                        child: Text(
+                            DateFormat('dd/MM/yyyy').format(_assessmentDate)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _DpaThreeColumn(
+                children: [
+                  _DpaLabeledField(
+                    label: 'Jenis Perjalanan',
+                    required: true,
+                    child: DropdownButtonFormField<String>(
+                      key: ValueKey(_tripType),
+                      initialValue: _tripType,
+                      decoration: _dpaInputDecoration(
+                        hint: 'Pilih jenis...',
+                        icon: Icons.signpost_rounded,
+                      ),
+                      items: const [
+                        'Roster masuk',
+                        'Roster keluar',
+                        'Perjalanan cuti',
+                        'Antar jemput operasional',
+                        'Perjalanan dinas',
+                      ]
+                          .map((item) => DropdownMenuItem(
+                                value: item,
+                                child: Text(item),
+                              ))
+                          .toList(),
+                      onChanged: (value) => setState(() => _tripType = value),
+                      validator: (value) =>
+                          value == null ? 'Pilih jenis perjalanan' : null,
+                    ),
+                  ),
+                  _DpaLabeledField(
+                    label: 'Rute Perjalanan',
+                    child: TextFormField(
+                      controller: _routeController,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: _dpaInputDecoration(
+                        hint: 'Misal: Site – Banjarmasin',
+                        icon: Icons.location_on_rounded,
+                      ),
+                    ),
+                  ),
+                  _DpaLabeledField(
+                    label: 'No. Lambung Kendaraan',
+                    child: TextFormField(
+                      controller: _vehicleController,
+                      textCapitalization: TextCapitalization.characters,
+                      decoration: _dpaInputDecoration(
+                        hint: 'Misal: LV-001',
+                        icon: Icons.airport_shuttle_rounded,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              ..._sections.map((section) => Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: _DpaAssessmentSection(
+                      section: section,
+                      expanded: _expandedSections.contains(section.number),
+                      ratings: _ratings,
+                      onToggle: () => setState(() {
+                        if (!_expandedSections.add(section.number)) {
+                          _expandedSections.remove(section.number);
+                        }
+                      }),
+                      onRated: (question, score) => setState(() {
+                        _ratings[question] = score;
+                      }),
+                    ),
+                  )),
+              _DpaLabeledField(
+                label: 'Catatan / Komentar Tambahan',
+                child: TextFormField(
+                  controller: _notesController,
+                  minLines: 4,
+                  maxLines: 6,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: _dpaInputDecoration(
+                    hint:
+                        'Tuliskan catatan tambahan mengenai performa driver...',
+                    icon: Icons.chat_rounded,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: FilledButton.icon(
+                  onPressed: _submit,
+                  icon: const Icon(Icons.send_rounded, size: 19),
+                  label: const Text(
+                    'KIRIM PENILAIAN DRIVER',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF1769E8),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+InputDecoration _dpaInputDecoration({
+  required String hint,
+  required IconData icon,
+  Widget? suffixIcon,
+}) {
+  return InputDecoration(
+    hintText: hint,
+    hintStyle: TextStyle(color: Colors.blueGrey.shade300, fontSize: 13),
+    prefixIcon: Icon(icon, color: const Color(0xFF1769E8), size: 20),
+    suffixIcon: suffixIcon,
+    filled: true,
+    fillColor: const Color(0xFFF0F4F9),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(13),
+      borderSide: BorderSide.none,
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(13),
+      borderSide: BorderSide.none,
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(13),
+      borderSide: const BorderSide(color: Color(0xFF1769E8), width: 1.4),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(13),
+      borderSide: const BorderSide(color: Colors.redAccent),
+    ),
+  );
+}
+
+class _DpaSection {
+  const _DpaSection({
+    required this.number,
+    required this.title,
+    required this.color,
+    required this.questions,
+  });
+
+  final int number;
+  final String title;
+  final Color color;
+  final List<String> questions;
+}
+
+class _DpaInfoBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF7FF),
+        borderRadius: BorderRadius.circular(12),
+        border:
+            const Border(left: BorderSide(color: Color(0xFF0EA5E9), width: 4)),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_rounded, color: Color(0xFF0284C7), size: 19),
+          SizedBox(width: 9),
+          Expanded(
+            child: Text(
+              'Evaluasi kompetensi, perilaku, dan kualitas berkendara driver berdasarkan pengalaman langsung selama perjalanan.',
+              style: TextStyle(
+                  color: Color(0xFF0369A1), fontSize: 12.5, height: 1.4),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DpaTwoColumn extends StatelessWidget {
+  const _DpaTwoColumn({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, constraints) {
+      if (constraints.maxWidth < 700) {
+        return Column(
+          children: [
+            children[0],
+            const SizedBox(height: 16),
+            children[1],
+          ],
+        );
+      }
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: children[0]),
+          const SizedBox(width: 16),
+          Expanded(child: children[1]),
+        ],
+      );
+    });
+  }
+}
+
+class _DpaThreeColumn extends StatelessWidget {
+  const _DpaThreeColumn({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, constraints) {
+      if (constraints.maxWidth < 760) {
+        return Column(
+          children: [
+            for (var i = 0; i < children.length; i++) ...[
+              children[i],
+              if (i < children.length - 1) const SizedBox(height: 16),
+            ],
+          ],
+        );
+      }
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var i = 0; i < children.length; i++) ...[
+            Expanded(child: children[i]),
+            if (i < children.length - 1) const SizedBox(width: 16),
+          ],
+        ],
+      );
+    });
+  }
+}
+
+class _DpaLabeledField extends StatelessWidget {
+  const _DpaLabeledField({
+    required this.label,
+    required this.child,
+    this.required = false,
+    this.action,
+    this.helper,
+  });
+
+  final String label;
+  final Widget child;
+  final bool required;
+  final Widget? action;
+  final String? helper;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text.rich(
+                TextSpan(
+                  text: label.toUpperCase(),
+                  children: [
+                    if (required)
+                      const TextSpan(
+                          text: ' *', style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+                style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: .2),
+              ),
+            ),
+            if (action != null) action!,
+          ],
+        ),
+        const SizedBox(height: 7),
+        child,
+        if (helper != null) ...[
+          const SizedBox(height: 6),
+          Text(helper!,
+              style: TextStyle(
+                  color: Colors.blueGrey.shade500,
+                  fontSize: 10.5,
+                  height: 1.3)),
+        ],
+      ],
+    );
+  }
+}
+
+class _DpaReadOnlyField extends StatelessWidget {
+  const _DpaReadOnlyField({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
+
+  final String label;
+  final String value;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return _DpaLabeledField(
+      label: label,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0F4F9),
+          borderRadius: BorderRadius.circular(13),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: const Color(0xFF1769E8), size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(value,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 13)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DpaAssessmentSection extends StatelessWidget {
+  const _DpaAssessmentSection({
+    required this.section,
+    required this.expanded,
+    required this.ratings,
+    required this.onToggle,
+    required this.onRated,
+  });
+
+  final _DpaSection section;
+  final bool expanded;
+  final Map<String, int> ratings;
+  final VoidCallback onToggle;
+  final void Function(String question, int score) onRated;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFDDE5EF)),
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: onToggle,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+              color: const Color(0xFFF6F8FB),
+              child: Row(
+                children: [
+                  Container(
+                    width: 25,
+                    height: 25,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: section.color,
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                    child: Text('${section.number}',
+                        style: const TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.w800)),
+                  ),
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: Text(section.title,
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w800)),
+                  ),
+                  Text('(${section.questions.length} Pertanyaan)',
+                      style: TextStyle(
+                          color: Colors.blueGrey.shade500, fontSize: 11)),
+                  const SizedBox(width: 8),
+                  Icon(expanded
+                      ? Icons.keyboard_arrow_up_rounded
+                      : Icons.keyboard_arrow_down_rounded),
+                ],
+              ),
+            ),
+          ),
+          if (expanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 4, 14, 6),
+              child: Column(
+                children: [
+                  for (var i = 0; i < section.questions.length; i++)
+                    _DpaQuestion(
+                      number: i + 1,
+                      question: section.questions[i],
+                      selected: ratings[section.questions[i]],
+                      onSelected: (score) =>
+                          onRated(section.questions[i], score),
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DpaQuestion extends StatelessWidget {
+  const _DpaQuestion({
+    required this.number,
+    required this.question,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final int number;
+  final String question;
+  final int? selected;
+  final ValueChanged<int> onSelected;
+
+  static const _options = [
+    (5, 'Sangat Baik', Color(0xFF16A34A), Color(0xFFECFDF3)),
+    (4, 'Baik', Color(0xFF0EA5E9), Color(0xFFEFF8FF)),
+    (3, 'Cukup', Color(0xFFF59E0B), Color(0xFFFFF8E7)),
+    (2, 'Kurang', Color(0xFFF97316), Color(0xFFFFF3EB)),
+    (1, 'Sangat Kurang', Color(0xFFF43F5E), Color(0xFFFFF1F3)),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFE5EAF1))),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _HeroMetricCard(
-            title: 'Driver Performance Assessment',
-            value: 'A-',
-            subtitle: 'Assessment driver roster/cuti bulan berjalan',
-            color: Color(0xFF0284C7),
-            icon: Icons.drive_eta_rounded,
+          Text('$number. $question',
+              style: const TextStyle(
+                  fontSize: 12.5, fontWeight: FontWeight.w700, height: 1.4)),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 7,
+            runSpacing: 8,
+            children: _options.map((option) {
+              final isSelected = selected == option.$1;
+              return InkWell(
+                onTap: () => onSelected(option.$1),
+                borderRadius: BorderRadius.circular(18),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: isSelected ? option.$3 : option.$4,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: option.$3),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isSelected
+                            ? Icons.check_circle_rounded
+                            : Icons.star_outline_rounded,
+                        size: 14,
+                        color: isSelected ? Colors.white : option.$3,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(option.$2,
+                          style: TextStyle(
+                              color: isSelected ? Colors.white : option.$3,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700)),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
           ),
-          SizedBox(height: 14),
-          _SectionTitle('Assessment Terbaru'),
-          _DriverTile(
-              name: 'Irfan Setiawan',
-              unit: 'LV-023',
-              score: '92',
-              status: 'Excellent'),
-          _DriverTile(
-              name: 'Rudi Hartono',
-              unit: 'BUS-017',
-              score: '87',
-              status: 'Good'),
-          _DriverTile(
-              name: 'Agus Firmansyah',
-              unit: 'LV-041',
-              score: '78',
-              status: 'Coaching Required'),
-          SizedBox(height: 16),
-          _SectionTitle('Parameter Penilaian'),
-          _QualityTile(
-              label: 'Defensive driving',
-              value: 92,
-              total: 100,
-              color: Color(0xFF16A34A)),
-          _QualityTile(
-              label: 'Punctuality roster pickup',
-              value: 88,
-              total: 100,
-              color: Color(0xFF2563EB)),
-          _QualityTile(
-              label: 'Vehicle readiness',
-              value: 81,
-              total: 100,
-              color: Color(0xFFF59E0B)),
-          _QualityTile(
-              label: 'Passenger feedback',
-              value: 90,
-              total: 100,
-              color: Color(0xFF16A34A)),
         ],
       ),
     );
@@ -1065,47 +1767,6 @@ class _ActionTimelineTile extends StatelessWidget {
               color: color,
               minHeight: 8,
               borderRadius: BorderRadius.circular(12)),
-        ],
-      ),
-    );
-  }
-}
-
-class _DriverTile extends StatelessWidget {
-  const _DriverTile(
-      {required this.name,
-      required this.unit,
-      required this.score,
-      required this.status});
-
-  final String name;
-  final String unit;
-  final String score;
-  final String status;
-
-  @override
-  Widget build(BuildContext context) {
-    return _SurfaceCard(
-      child: Row(
-        children: [
-          CircleAvatar(
-              backgroundColor: Colors.blue.shade50,
-              child: const Icon(Icons.person, color: Colors.blue)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.w800)),
-                Text('$unit  |  $status',
-                    style:
-                        const TextStyle(color: Colors.black54, fontSize: 12)),
-              ],
-            ),
-          ),
-          Text(score,
-              style:
-                  const TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
         ],
       ),
     );
