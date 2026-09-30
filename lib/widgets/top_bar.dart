@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../pages/home_page.dart';
+import '../pages/notif_page.dart';
 import '../services/database.dart';
 import '../services/preference.dart';
 import '../utils/globals.dart' as globals;
@@ -130,11 +131,9 @@ class _TopBarState extends State<TopBar> {
                 color: Colors.black45,
               ),
               onPressed: () async {
-                globals.currentPage = 1;
-                await Navigator.pushAndRemoveUntil(
+                await Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const HomePage()),
-                  (route) => false,
+                  MaterialPageRoute(builder: (context) => const NotifPage()),
                 );
               },
             ),

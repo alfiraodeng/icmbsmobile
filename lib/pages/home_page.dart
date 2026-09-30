@@ -10,9 +10,8 @@ import '../services/preference.dart';
 import '../utils/globals.dart' as globals;
 import 'dashboard_page.dart';
 import 'hazard/hazard_form_page.dart';
-import 'notif_page.dart';
 import 'profile_page.dart';
-import 'support_page.dart';
+import 'safety_updates_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -90,13 +89,14 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (bool didPop) {
+      onPopInvokedWithResult: (bool didPop, Object? result) {
         if (didPop) return;
         _showBackDialog();
       },
       child: Scaffold(
         body: PageView(
           controller: _pageCtrl,
+          physics: const NeverScrollableScrollPhysics(),
           onPageChanged: (page) {
             setState(() {
               _currentPage = page;
@@ -105,10 +105,9 @@ class _HomePageState extends State<HomePage> {
           },
           children: const [
             DashboardPage(),
-            NotifPage(),
-            DashboardPage(),
+            SafetyUpdatesPage(),
+            SizedBox.shrink(),
             ProfilePage(),
-            SupportPage(),
           ],
         ),
         extendBody: true,
@@ -140,89 +139,58 @@ class _HomePageState extends State<HomePage> {
 
   Widget bottomNavBar() {
     return SizedBox(
-      height: 130,
-      child: Stack(
-        children: [
-          Container(
-            margin: const EdgeInsets.only(top: 30),
-            height: 100,
-            child: BottomNavigationBar(
-              iconSize: 36,
-              selectedFontSize: 32,
-              type: BottomNavigationBarType.fixed,
-              items: const [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.home, size: 28),
-                  label: 'Home',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.notifications_active, size: 28),
-                  label: 'Notif',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.emergency,
-                      size: 28, color: Colors.transparent),
-                  label: 'Quick Hazard',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.person, size: 28),
-                  label: 'Profile',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.headset_mic, size: 28),
-                  label: 'Support',
-                ),
-              ],
-              currentIndex: _currentPage,
-              selectedLabelStyle: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-              unselectedLabelStyle: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-              onTap: (index) {
-                if (index == 2) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const HazardFormPage(),
-                    ),
-                  );
-                  return;
-                }
-                _pageCtrl.animateToPage(
-                  index,
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.ease,
-                );
-              },
-            ),
+      height: 104,
+      child: BottomNavigationBar(
+        iconSize: 28,
+        selectedFontSize: 11,
+        unselectedFontSize: 10,
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home, size: 28),
+            label: 'Beranda',
           ),
-          Container(
-            alignment: Alignment.topCenter,
-            child: InkWell(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const HazardFormPage(),
-                  ),
-                );
-              },
-              child: CircleAvatar(
-                radius: 30,
-                backgroundColor: Colors.transparent,
-                child: Image.asset(
-                  'assets/images/quick-hazard.png',
-                  height: 72,
-                  fit: BoxFit.cover,
-                ),
-              ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.health_and_safety_rounded, size: 28),
+            label: 'Safety Updates',
+          ),
+          BottomNavigationBarItem(
+            icon: Image(
+              image: AssetImage('assets/images/quick-hazard.png'),
+              height: 30,
             ),
+            label: 'Quick Hazard',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person, size: 28),
+            label: 'Profil',
           ),
         ],
+        currentIndex: _currentPage,
+        selectedLabelStyle: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w500,
+        ),
+        onTap: (index) {
+          if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const HazardFormPage(),
+              ),
+            );
+            return;
+          }
+          _pageCtrl.animateToPage(
+            index,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.ease,
+          );
+        },
       ),
     );
   }

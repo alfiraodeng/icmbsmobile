@@ -11,6 +11,7 @@ import '../utils/routers.dart';
 import 'menu/extra_page.dart';
 import 'menu/ohs_page.dart';
 import 'menu/sap_page.dart';
+import 'notif_page.dart';
 
 class _HomeModuleCard extends StatelessWidget {
   const _HomeModuleCard({
@@ -82,6 +83,76 @@ class _HomeModuleCard extends StatelessWidget {
                   ),
                 ),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeNotificationButton extends StatelessWidget {
+  const _HomeNotificationButton({
+    required this.count,
+    required this.onTap,
+  });
+
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: count > 0 ? 'Notifikasi, $count belum dibaca' : 'Notifikasi',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: SizedBox(
+          width: 46,
+          height: 46,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5FF),
+                  borderRadius: BorderRadius.circular(13),
+                  border: Border.all(color: const Color(0xFFDCE6FF)),
+                ),
+                child: const Icon(
+                  Icons.notifications_none_rounded,
+                  color: Color(0xFF1D4ED8),
+                  size: 25,
+                ),
+              ),
+              if (count > 0)
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: Container(
+                    constraints:
+                        const BoxConstraints(minWidth: 19, minHeight: 19),
+                    padding: const EdgeInsets.symmetric(horizontal: 5),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEF4444),
+                      borderRadius: BorderRadius.circular(99),
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: Text(
+                      count > 99 ? '99+' : '$count',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -313,13 +384,25 @@ class _DashboardPageState extends State<DashboardPage> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-              child: Text(
-                'Hai, ${_profile?.namaLengkap}'.toUpperCase(),
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Hai, ${_profile?.namaLengkap}'.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                  _HomeNotificationButton(
+                    count: PreferenceService.getNotif(),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const NotifPage()),
+                    ),
+                  ),
+                ],
               ),
             ),
             const Padding(
