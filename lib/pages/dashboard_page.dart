@@ -451,19 +451,28 @@ class _DashboardPageState extends State<DashboardPage> {
           border-radius: 50%;
           display: inline-block;
         }
-        .user-location-pin {
-          width: 22px;
-          height: 22px;
-          border: 4px solid #ffffff;
+        .user-location-arrow {
+          width: 34px;
+          height: 34px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           border-radius: 50%;
-          background: #2563eb;
-          box-shadow: 0 0 0 8px rgba(37, 99, 235, .22), 0 4px 12px rgba(15, 23, 42, .28);
+          background: #ffffff;
+          border: 2px solid #2563eb;
+          box-shadow: 0 0 0 7px rgba(37, 99, 235, .18), 0 4px 12px rgba(15, 23, 42, .28);
           position: relative;
         }
-        .user-location-pin::after {
+        .user-location-arrow svg {
+          width: 24px;
+          height: 24px;
+          fill: #2563eb;
+          transform: rotate(18deg);
+        }
+        .user-location-arrow::after {
           content: '';
-          position: absolute;
-          inset: -10px;
+          position: absolute; 
+          inset: -9px;
           border: 2px solid rgba(37, 99, 235, .45);
           border-radius: 50%;
           animation: userPulse 1.8s ease-out infinite;
@@ -526,6 +535,8 @@ class _DashboardPageState extends State<DashboardPage> {
             area: 'Workshop LV',
             level: 'Tinggi',
             color: '#ef4444',
+            status: 'On Progress',
+            statusColor: '#f59e0b',
             lat: 1.2118,
             lng: 117.2198,
             photo: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=520&q=80',
@@ -536,6 +547,8 @@ class _DashboardPageState extends State<DashboardPage> {
             area: 'Hauling Road KM 4',
             level: 'Sedang',
             color: '#f59e0b',
+            status: 'Open',
+            statusColor: '#ef4444',
             lat: 1.1997,
             lng: 117.2331,
             photo: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=520&q=80',
@@ -546,6 +559,8 @@ class _DashboardPageState extends State<DashboardPage> {
             area: 'Pit Selatan',
             level: 'Kritis',
             color: '#b91c1c',
+            status: 'Open',
+            statusColor: '#ef4444',
             lat: 1.1914,
             lng: 117.2145,
             photo: 'https://images.unsplash.com/photo-1516937941344-00b4e0337589?auto=format&fit=crop&w=520&q=80',
@@ -556,6 +571,8 @@ class _DashboardPageState extends State<DashboardPage> {
             area: 'Office Site',
             level: 'Rendah',
             color: '#22c55e',
+            status: 'Closed',
+            statusColor: '#16a34a',
             lat: 1.2175,
             lng: 117.2385,
             photo: 'https://images.unsplash.com/photo-1581092919535-7146ff1a590b?auto=format&fit=crop&w=520&q=80',
@@ -566,6 +583,8 @@ class _DashboardPageState extends State<DashboardPage> {
             area: 'Crusher Area',
             level: 'Sedang',
             color: '#f97316',
+            status: 'On Progress',
+            statusColor: '#f59e0b',
             lat: 1.2071,
             lng: 117.2462,
             photo: 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?auto=format&fit=crop&w=520&q=80',
@@ -576,6 +595,8 @@ class _DashboardPageState extends State<DashboardPage> {
             area: 'Fuel Station',
             level: 'Kritis',
             color: '#dc2626',
+            status: 'Open',
+            statusColor: '#ef4444',
             lat: 1.2232,
             lng: 117.2268,
             photo: 'https://images.unsplash.com/photo-1581094480465-4e6c25fb4a52?auto=format&fit=crop&w=520&q=80',
@@ -596,9 +617,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
           const userIcon = L.divIcon({
             className: '',
-            html: '<div class="user-location-pin"></div>',
-            iconSize: [30, 30],
-            iconAnchor: [15, 15]
+            html: '<div class="user-location-arrow"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2z"/></svg></div>',
+            iconSize: [38, 38],
+            iconAnchor: [19, 19]
           });
           userAccuracyCircle = L.circle(userCoordinates, {
             radius: Math.max(accuracy || 10, 10),
@@ -664,8 +685,10 @@ class _DashboardPageState extends State<DashboardPage> {
             <div class="hazard-popup">
               <img src="${point.photo}" />
               <span class="badge" style="background:${point.color}">${point.level}</span>
+              <span class="badge" style="background:${point.statusColor};margin-left:5px">${point.status}</span>
               <h3>${point.title}</h3>
               <p><strong>Area:</strong> ${point.area}</p>
+              <p><strong>Status Hazard:</strong> ${point.status}</p>
               <p>${point.notes}</p>
             </div>
           `);
