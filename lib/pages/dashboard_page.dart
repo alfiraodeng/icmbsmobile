@@ -90,6 +90,100 @@ class _HomeModuleCard extends StatelessWidget {
   }
 }
 
+Future<void> _injectCurrentPosition(WebViewController controller) async {
+  try {
+    if (!await Geolocator.isLocationServiceEnabled()) return;
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      return;
+    }
+
+    final position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+    await controller.runJavaScript(
+      'window.setUserLocation(${position.latitude}, ${position.longitude}, ${position.accuracy});',
+    );
+  } catch (error) {
+    debugPrint('Gagal menampilkan posisi pengguna pada heatmap: $error');
+  }
+}
+
+class _FullscreenHazardMapPage extends StatefulWidget {
+  const _FullscreenHazardMapPage({required this.html});
+
+  final String html;
+
+  @override
+  State<_FullscreenHazardMapPage> createState() =>
+      _FullscreenHazardMapPageState();
+}
+
+class _FullscreenHazardMapPageState extends State<_FullscreenHazardMapPage> {
+  late final WebViewController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(Colors.transparent)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageFinished: (_) => _injectCurrentPosition(_controller),
+        ),
+      )
+      ..loadHtmlString(widget.html);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: WebViewWidget(
+              controller: _controller,
+              gestureRecognizers: {
+                Factory<OneSequenceGestureRecognizer>(
+                  () => EagerGestureRecognizer(),
+                ),
+              },
+            ),
+          ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: FilledButton.tonalIcon(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.fullscreen_exit_rounded),
+                    label: const Text('Perkecil'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFF1D4ED8),
+                      elevation: 5,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
@@ -118,7 +212,7 @@ class _DashboardPageState extends State<DashboardPage> {
       ..setBackgroundColor(Colors.transparent)
       ..setNavigationDelegate(
         NavigationDelegate(
-          onPageFinished: (_) => _showCurrentPositionOnMap(),
+          onPageFinished: (_) => _injectCurrentPosition(_hazardMapCtrl),
         ),
       )
       ..loadHtmlString(_hazardMapHtml());
@@ -130,29 +224,6 @@ class _DashboardPageState extends State<DashboardPage> {
         }.toList());
       });
     });
-  }
-
-  Future<void> _showCurrentPositionOnMap() async {
-    try {
-      if (!await Geolocator.isLocationServiceEnabled()) return;
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        return;
-      }
-
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-      await _hazardMapCtrl.runJavaScript(
-        'window.setUserLocation(${position.latitude}, ${position.longitude}, ${position.accuracy});',
-      );
-    } catch (error) {
-      debugPrint('Gagal menampilkan posisi pengguna pada heatmap: $error');
-    }
   }
 
   @override
@@ -353,13 +424,51 @@ class _DashboardPageState extends State<DashboardPage> {
                         border: Border.all(color: Colors.grey.shade200),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: WebViewWidget(
-                        controller: _hazardMapCtrl,
-                        gestureRecognizers: {
-                          Factory<OneSequenceGestureRecognizer>(
-                            () => EagerGestureRecognizer(),
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: WebViewWidget(
+                              controller: _hazardMapCtrl,
+                              gestureRecognizers: {
+                                Factory<OneSequenceGestureRecognizer>(
+                                  () => EagerGestureRecognizer(),
+                                ),
+                              },
+                            ),
                           ),
-                        },
+                          Positioned(
+                            top: 112,
+                            right: 12,
+                            child: Material(
+                              color: Colors.white,
+                              elevation: 5,
+                              borderRadius: BorderRadius.circular(11),
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      fullscreenDialog: true,
+                                      builder: (context) =>
+                                          _FullscreenHazardMapPage(
+                                        html: _hazardMapHtml(),
+                                      ),
+                                    ),
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(11),
+                                child: const SizedBox(
+                                  width: 44,
+                                  height: 44,
+                                  child: Icon(
+                                    Icons.fullscreen_rounded,
+                                    color: Color(0xFF1D4ED8),
+                                    size: 27,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
