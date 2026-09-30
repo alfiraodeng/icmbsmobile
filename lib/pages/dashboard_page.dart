@@ -137,49 +137,67 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(90),
+        preferredSize: const Size.fromHeight(138),
         child: AppBar(
-          toolbarHeight: 90,
+          toolbarHeight: 138,
           automaticallyImplyLeading: false,
           surfaceTintColor: Colors.transparent,
           centerTitle: true,
           elevation: 0,
-          title: Container(
-            margin: const EdgeInsets.only(top: 30),
-            child: Stack(
+          title: Padding(
+            padding: const EdgeInsets.only(top: 14, bottom: 8),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Visibility(
-                  visible: (_searchText == ''),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    child: Text('Search...', style: TextStyle(fontSize: 18)),
-                  ),
+                Image.asset(
+                  'assets/images/home-indexsafe.png',
+                  height: 42,
+                  width: 46,
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.high,
                 ),
-                Autocomplete(
-                  optionsBuilder: (TextEditingValue txtValue) {
-                    setState(() => _searchText = txtValue.text);
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 50,
+                  child: Stack(
+                    children: [
+                      Visibility(
+                        visible: (_searchText == ''),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 10),
+                          child:
+                              Text('Search...', style: TextStyle(fontSize: 18)),
+                        ),
+                      ),
+                      Autocomplete(
+                        optionsBuilder: (TextEditingValue txtValue) {
+                          setState(() => _searchText = txtValue.text);
 
-                    if (txtValue.text == '') {
-                      return const Iterable<String>.empty();
-                    }
+                          if (txtValue.text == '') {
+                            return const Iterable<String>.empty();
+                          }
 
-                    return _searchList.where((String option) {
-                      return option
-                          .toLowerCase()
-                          .contains(txtValue.text.toLowerCase());
-                    });
-                  },
-                  onSelected: (String selection) {
-                    var vals = _rawData
-                        .where(
-                            (e) => e.title.replaceAll('\n', ' ') == selection)
-                        .toList();
-                    if (vals.isNotEmpty) {
-                      routePage(context, vals.first.route,
-                          title: vals.first.title);
-                    }
-                  },
-                  initialValue: const TextEditingValue(text: ''),
+                          return _searchList.where((String option) {
+                            return option
+                                .toLowerCase()
+                                .contains(txtValue.text.toLowerCase());
+                          });
+                        },
+                        onSelected: (String selection) {
+                          var vals = _rawData
+                              .where((e) =>
+                                  e.title.replaceAll('\n', ' ') == selection)
+                              .toList();
+                          if (vals.isNotEmpty) {
+                            routePage(context, vals.first.route,
+                                title: vals.first.title);
+                          }
+                        },
+                        initialValue: const TextEditingValue(text: ''),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
