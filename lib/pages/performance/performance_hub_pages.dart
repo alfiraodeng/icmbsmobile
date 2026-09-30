@@ -1362,44 +1362,69 @@ class _DpaQuestion extends StatelessWidget {
               style: const TextStyle(
                   fontSize: 12.5, fontWeight: FontWeight.w700, height: 1.4)),
           const SizedBox(height: 10),
-          Wrap(
-            spacing: 7,
-            runSpacing: 8,
-            children: _options.map((option) {
-              final isSelected = selected == option.$1;
-              return InkWell(
-                onTap: () => onSelected(option.$1),
-                borderRadius: BorderRadius.circular(18),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 160),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                  decoration: BoxDecoration(
-                    color: isSelected ? option.$3 : option.$4,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: option.$3),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        isSelected
-                            ? Icons.check_circle_rounded
-                            : Icons.star_outline_rounded,
-                        size: 14,
-                        color: isSelected ? Colors.white : option.$3,
+          Row(
+            children: [
+              for (var i = 0; i < _options.length; i++) ...[
+                Expanded(
+                  child: Builder(builder: (context) {
+                    final option = _options[i];
+                    final isSelected = selected == option.$1;
+                    return InkWell(
+                      onTap: () => onSelected(option.$1),
+                      borderRadius: BorderRadius.circular(10),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 160),
+                        height: 36,
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        decoration: BoxDecoration(
+                          color: isSelected ? option.$3 : option.$4,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: option.$3,
+                            width: isSelected ? 1.4 : 1,
+                          ),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: option.$3.withValues(alpha: .22),
+                                    blurRadius: 7,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                isSelected
+                                    ? Icons.check_circle_rounded
+                                    : Icons.star_outline_rounded,
+                                size: 12,
+                                color: isSelected ? Colors.white : option.$3,
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                option.$2,
+                                maxLines: 1,
+                                style: TextStyle(
+                                  color: isSelected ? Colors.white : option.$3,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      const SizedBox(width: 4),
-                      Text(option.$2,
-                          style: TextStyle(
-                              color: isSelected ? Colors.white : option.$3,
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w700)),
-                    ],
-                  ),
+                    );
+                  }),
                 ),
-              );
-            }).toList(),
+                if (i < _options.length - 1) const SizedBox(width: 5),
+              ],
+            ],
           ),
         ],
       ),
