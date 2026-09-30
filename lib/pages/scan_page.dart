@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class ScanPage extends StatelessWidget {
   const ScanPage({super.key});
@@ -86,18 +89,167 @@ class ScanPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              const _ScanOptionCard(
+              _ScanOptionCard(
                 icon: Icons.badge_rounded,
                 title: 'Mine Permit',
                 subtitle: 'Verifikasi mine permit pekerja dengan cepat.',
-                color: Color(0xFF0F9F8F),
+                color: const Color(0xFF0F9F8F),
+                onTap: () => _openScanner(context, 'Mine Permit'),
               ),
               const SizedBox(height: 12),
-              const _ScanOptionCard(
+              _ScanOptionCard(
                 icon: Icons.event_available_rounded,
                 title: 'Absen Acara',
                 subtitle: 'Catat kehadiran peserta pada kegiatan perusahaan.',
-                color: Color(0xFFF08A00),
+                color: const Color(0xFFF08A00),
+                onTap: () => _openScanner(context, 'Absen Acara'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openScanner(BuildContext context, String scanType) async {
+    var permission = await Permission.camera.status;
+    if (!permission.isGranted) {
+      permission = await Permission.camera.request();
+    }
+
+    if (!permission.isGranted) {
+      if (!context.mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          icon: const Icon(Icons.camera_alt_outlined,
+              color: Color(0xFF155EEF), size: 36),
+          title: const Text('Izin Kamera Diperlukan'),
+          content: const Text(
+            'Izinkan akses kamera agar MBS SAP dapat memindai barcode atau QR code.',
+            textAlign: TextAlign.center,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Nanti'),
+            ),
+            if (permission.isPermanentlyDenied || permission.isRestricted)
+              FilledButton(
+                onPressed: () async {
+                  Navigator.pop(dialogContext);
+                  await openAppSettings();
+                },
+                child: const Text('Buka Pengaturan'),
+              ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    if (!context.mounted) return;
+    final result = await Navigator.push<_ScanResult>(
+      context,
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => _BarcodeScannerPage(scanType: scanType),
+      ),
+    );
+    if (result == null || !context.mounted) return;
+    await _showScanResult(context, scanType, result);
+  }
+
+  Future<void> _showScanResult(
+    BuildContext context,
+    String scanType,
+    _ScanResult result,
+  ) {
+    return showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            22,
+            4,
+            22,
+            22 + MediaQuery.viewInsetsOf(sheetContext).bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 58,
+                height: 58,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFEAFBF3),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_circle_rounded,
+                    color: Color(0xFF12B76A), size: 38),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'Kode Berhasil Dipindai',
+                style: TextStyle(
+                  color: Color(0xFF101828),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '$scanType • ${result.format}',
+                style: const TextStyle(color: Color(0xFF667085), fontSize: 12),
+              ),
+              const SizedBox(height: 18),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(color: const Color(0xFFE4E7EC)),
+                ),
+                child: SelectableText(
+                  result.value,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFF344054),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        await Clipboard.setData(
+                          ClipboardData(text: result.value),
+                        );
+                        if (!sheetContext.mounted) return;
+                        ScaffoldMessenger.of(sheetContext).showSnackBar(
+                          const SnackBar(
+                              content: Text('Kode berhasil disalin.')),
+                        );
+                      },
+                      icon: const Icon(Icons.copy_rounded),
+                      label: const Text('Salin'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () => Navigator.pop(sheetContext),
+                      child: const Text('Selesai'),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -113,61 +265,290 @@ class _ScanOptionCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.color,
+    required this.onTap,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final Color color;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFEAECF0)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: .1),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: Icon(icon, color: color, size: 27),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFEAECF0)),
           ),
-          const SizedBox(width: 14),
-          Expanded(
+          child: Row(
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: .1),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Icon(icon, color: color, size: 27),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Color(0xFF101828),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: Color(0xFF667085),
+                        fontSize: 11,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded, color: Color(0xFF98A2B3)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BarcodeScannerPage extends StatefulWidget {
+  const _BarcodeScannerPage({required this.scanType});
+
+  final String scanType;
+
+  @override
+  State<_BarcodeScannerPage> createState() => _BarcodeScannerPageState();
+}
+
+class _BarcodeScannerPageState extends State<_BarcodeScannerPage> {
+  late final MobileScannerController _controller;
+  bool _returningResult = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = MobileScannerController(
+      detectionSpeed: DetectionSpeed.noDuplicates,
+      facing: CameraFacing.back,
+      torchEnabled: false,
+      formats: const [
+        BarcodeFormat.qrCode,
+        BarcodeFormat.code128,
+        BarcodeFormat.code39,
+        BarcodeFormat.code93,
+        BarcodeFormat.ean13,
+        BarcodeFormat.ean8,
+        BarcodeFormat.upcA,
+        BarcodeFormat.upcE,
+        BarcodeFormat.dataMatrix,
+        BarcodeFormat.pdf417,
+        BarcodeFormat.aztec,
+        BarcodeFormat.codabar,
+        BarcodeFormat.itf14,
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _onDetect(BarcodeCapture capture) async {
+    if (_returningResult) return;
+    for (final barcode in capture.barcodes) {
+      final value = barcode.rawValue?.trim();
+      if (value == null || value.isEmpty) continue;
+      _returningResult = true;
+      await _controller.stop();
+      if (!mounted) return;
+      Navigator.pop(
+        context,
+        _ScanResult(value: value, format: barcode.format.name.toUpperCase()),
+      );
+      return;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          MobileScanner(controller: _controller, onDetect: _onDetect),
+          const _ScannerShade(),
+          SafeArea(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Color(0xFF101828),
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Row(
+                    children: [
+                      _ScannerButton(
+                        icon: Icons.close_rounded,
+                        tooltip: 'Tutup',
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      Expanded(
+                        child: Text(
+                          'Scan ${widget.scanType}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      _ScannerButton(
+                        icon: Icons.flash_on_rounded,
+                        tooltip: 'Lampu flash',
+                        onPressed: _controller.toggleTorch,
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: Color(0xFF667085),
-                    fontSize: 11,
-                    height: 1.3,
+                const Spacer(),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(28, 0, 28, 42),
+                  child: Text(
+                    'Posisikan barcode atau QR code di dalam bingkai. Pemindaian berjalan otomatis.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      height: 1.4,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          const Icon(Icons.chevron_right_rounded, color: Color(0xFF98A2B3)),
         ],
+      ),
+      floatingActionButton: SafeArea(
+        child: FloatingActionButton.small(
+          heroTag: 'switch-scanner-camera',
+          backgroundColor: Colors.white,
+          foregroundColor: const Color(0xFF101828),
+          onPressed: _controller.switchCamera,
+          tooltip: 'Ganti kamera',
+          child: const Icon(Icons.cameraswitch_rounded),
+        ),
       ),
     );
   }
+}
+
+class _ScannerShade extends StatelessWidget {
+  const _ScannerShade();
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = (constraints.maxWidth - 56).clamp(240.0, 330.0);
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              ColorFiltered(
+                colorFilter: const ColorFilter.mode(
+                  Color(0x77000000),
+                  BlendMode.srcOut,
+                ),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.black,
+                        backgroundBlendMode: BlendMode.dstOut,
+                      ),
+                    ),
+                    Center(
+                      child: Container(
+                        width: width,
+                        height: 220,
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: width,
+                height: 220,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: Colors.white, width: 3),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ScannerButton extends StatelessWidget {
+  const _ScannerButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton.filled(
+      style: IconButton.styleFrom(
+        backgroundColor: Colors.black.withValues(alpha: .42),
+        foregroundColor: Colors.white,
+      ),
+      onPressed: onPressed,
+      tooltip: tooltip,
+      icon: Icon(icon),
+    );
+  }
+}
+
+class _ScanResult {
+  const _ScanResult({required this.value, required this.format});
+
+  final String value;
+  final String format;
 }

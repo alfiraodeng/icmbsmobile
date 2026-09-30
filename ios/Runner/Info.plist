@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 		<key>NSCameraUsageDescription</key>
-		<string>Aplikasi ini membutuhkan akses kamera untuk mengambil foto hazard, inspeksi, dan lampiran lainnya.</string>
+		<string>MBS SAP membutuhkan akses kamera untuk memindai barcode atau QR code serta mengambil foto hazard, inspeksi, dan lampiran lainnya.</string>
 		<key>NSMicrophoneUsageDescription</key>
 		<string>Aplikasi ini membutuhkan akses mikrofon saat merekam video dari kamera.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
