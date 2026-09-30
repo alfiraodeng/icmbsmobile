@@ -143,17 +143,19 @@ class _FullscreenHazardMapPageState extends State<_FullscreenHazardMapPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.white,
       body: Stack(
         children: [
           Positioned.fill(
-            child: WebViewWidget(
-              controller: _controller,
-              gestureRecognizers: {
-                Factory<OneSequenceGestureRecognizer>(
-                  () => EagerGestureRecognizer(),
-                ),
-              },
+            child: SafeArea(
+              child: WebViewWidget(
+                controller: _controller,
+                gestureRecognizers: {
+                  Factory<OneSequenceGestureRecognizer>(
+                    () => EagerGestureRecognizer(),
+                  ),
+                },
+              ),
             ),
           ),
           Positioned(
@@ -505,15 +507,39 @@ class _DashboardPageState extends State<DashboardPage> {
           border: none !important;
           box-shadow: 0 8px 20px rgba(15, 23, 42, .16) !important;
         }
+        .leaflet-control-zoom a {
+          width: 34px !important;
+          height: 34px !important;
+          line-height: 32px !important;
+          font-size: 19px !important;
+        }
+        .leaflet-control-layers-toggle {
+          width: 38px !important;
+          height: 38px !important;
+          background-size: 22px 22px !important;
+        }
+        .leaflet-left .leaflet-control {
+          margin-left: 12px !important;
+        }
+        .leaflet-right .leaflet-control {
+          margin-right: 12px !important;
+        }
+        .leaflet-top .leaflet-control {
+          margin-top: 12px !important;
+        }
         .leaflet-popup-content-wrapper {
           border-radius: 14px;
+          box-shadow: 0 12px 30px rgba(15, 23, 42, .22);
+        }
+        .leaflet-popup {
+          transition: opacity .14s ease-out;
         }
         .hazard-popup {
-          width: 210px;
+          width: 190px;
         }
         .hazard-popup img {
-          width: 210px;
-          height: 118px;
+          width: 190px;
+          height: 104px;
           object-fit: cover;
           border-radius: 10px;
           display: block;
@@ -591,8 +617,8 @@ class _DashboardPageState extends State<DashboardPage> {
           100% { transform: scale(1.7); opacity: 0; }
         }
         .locate-me-button {
-          width: 38px;
-          height: 38px;
+          width: 34px;
+          height: 34px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -614,11 +640,15 @@ class _DashboardPageState extends State<DashboardPage> {
       <script>
         const street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19,
+          keepBuffer: 4,
+          updateWhenIdle: false,
           attribution: '&copy; OpenStreetMap'
         });
 
         const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
           maxZoom: 19,
+          keepBuffer: 4,
+          updateWhenIdle: false,
           attribution: 'Tiles &copy; Esri'
         });
 
@@ -626,11 +656,26 @@ class _DashboardPageState extends State<DashboardPage> {
           center: [1.2057, 117.2247],
           zoom: 13,
           layers: [satellite],
+          preferCanvas: true,
           zoomControl: true,
           dragging: true,
           scrollWheelZoom: true,
           doubleClickZoom: true,
-          touchZoom: true
+          touchZoom: true,
+          closePopupOnClick: true,
+          zoomAnimation: true,
+          fadeAnimation: true,
+          markerZoomAnimation: true,
+          inertia: true,
+          inertiaDeceleration: 2600,
+          easeLinearity: .22,
+          zoomSnap: .5,
+          zoomDelta: .5,
+          wheelPxPerZoomLevel: 90
+        });
+
+        map.on('preclick', function() {
+          map.closePopup();
         });
 
         L.control.layers({
@@ -749,8 +794,8 @@ class _DashboardPageState extends State<DashboardPage> {
               <p style="margin:2px 0;font-size:11px;color:#64748b">Akurasi ±${Math.round(accuracy || 0)} meter</p>
             </div>
           `);
-          map.flyTo(userCoordinates, 15, { animate: true, duration: .8 });
-          setTimeout(() => userMarker.openPopup(), 850);
+          map.flyTo(userCoordinates, 15, { animate: true, duration: .6 });
+          setTimeout(() => userMarker.openPopup(), 650);
         };
 
         const LocateMeControl = L.Control.extend({
@@ -764,8 +809,8 @@ class _DashboardPageState extends State<DashboardPage> {
             L.DomEvent.on(button, 'click', function(event) {
               L.DomEvent.preventDefault(event);
               if (userCoordinates) {
-                map.flyTo(userCoordinates, 16, { animate: true, duration: .7 });
-                if (userMarker) setTimeout(() => userMarker.openPopup(), 700);
+                map.flyTo(userCoordinates, 16, { animate: true, duration: .55 });
+                if (userMarker) setTimeout(() => userMarker.openPopup(), 600);
               }
             });
             return button;
@@ -800,7 +845,12 @@ class _DashboardPageState extends State<DashboardPage> {
               <p><strong>Status Hazard:</strong> ${point.status}</p>
               <p>${point.notes}</p>
             </div>
-          `);
+          `, {
+            maxWidth: 210,
+            autoPan: true,
+            autoPanPaddingTopLeft: [18, 90],
+            autoPanPaddingBottomRight: [18, 28]
+          });
         });
 
         const legend = L.control({ position: 'bottomleft' });
