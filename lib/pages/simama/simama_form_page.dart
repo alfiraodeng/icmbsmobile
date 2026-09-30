@@ -13,6 +13,7 @@ import '../../services/preference.dart';
 import '../../utils/enums.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/button_app.dart';
+import '../../widgets/sap_form_widgets.dart';
 import '../../widgets/top_bar.dart';
 import 'simama_checklist_page.dart';
 
@@ -35,6 +36,7 @@ class _SimamaFormPageState extends State<SimamaFormPage> {
   final List<MapEntry<int, dynamic>> _areaList = [];
   DateTime? _date = DateTime.now();
   String? _time = DateFormat('hh:mm').format(DateTime.now());
+  int? _companyId;
   int? _areaId;
   int _inspektor = 1;
   int? _inspektorId1;
@@ -57,6 +59,7 @@ class _SimamaFormPageState extends State<SimamaFormPage> {
   @override
   void initState() {
     super.initState();
+    _companyId = _profile?.companyId;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _db.rawQuery('''select
@@ -215,6 +218,11 @@ class _SimamaFormPageState extends State<SimamaFormPage> {
                 },
               ),
               const SizedBox(height: 15),
+              CompanyDropdown(
+                initialCompanyId: _profile?.companyId,
+                initialCompanyName: _profile?.company,
+                onChanged: (value) => setState(() => _companyId = value),
+              ),
               const Text(
                 'Area Inspeksi',
                 style: TextStyle(
@@ -834,7 +842,7 @@ class _SimamaFormPageState extends State<SimamaFormPage> {
                                 '${_profile?.noNik}-${DateTime.now().millisecondsSinceEpoch}0000000000'
                                     .substring(0, 24),
                             title: 'Sidak Malam Management',
-                            companyId: _profile?.companyId,
+                            companyId: _companyId,
                             employeeId: _profile?.id,
                             inspectionId: 1359,
                             areaId: _areaId,

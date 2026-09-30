@@ -304,12 +304,6 @@ class _HazardFormPageState extends State<HazardFormPage> {
                   setState(() => _time = val),
                 },
               ),
-              const SizedBox(height: 15),
-              CompanyDropdown(
-                initialCompanyId: _profile?.companyId,
-                initialCompanyName: _profile?.company,
-                onChanged: (value) => setState(() => _companyId = value),
-              ),
               const SapFormSectionTitle(
                 title: 'Klasifikasi Bahaya',
                 subtitle:
@@ -602,8 +596,13 @@ class _HazardFormPageState extends State<HazardFormPage> {
                 onChanged: (String val) => setState(() {}),
               ),
               const SizedBox(height: 15),
+              CompanyDropdown(
+                initialCompanyId: _profile?.companyId,
+                initialCompanyName: _profile?.company,
+                onChanged: (value) => setState(() => _companyId = value),
+              ),
               const Text(
-                'Penanggung Jawab Area (PJA)',
+                'Tentukan PJA',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,

@@ -345,6 +345,7 @@ class _BarcodeScannerPage extends StatefulWidget {
 class _BarcodeScannerPageState extends State<_BarcodeScannerPage> {
   late final MobileScannerController _controller;
   bool _returningResult = false;
+  double _zoomAtGestureStart = 0;
 
   @override
   void initState() {
@@ -400,8 +401,18 @@ class _BarcodeScannerPageState extends State<_BarcodeScannerPage> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          MobileScanner(controller: _controller, onDetect: _onDetect),
-          const _ScannerShade(),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onScaleStart: (_) {
+              _zoomAtGestureStart = _controller.value.zoomScale;
+            },
+            onScaleUpdate: (details) {
+              final zoom = (_zoomAtGestureStart + (details.scale - 1) * .5)
+                  .clamp(0.0, 1.0);
+              _controller.setZoomScale(zoom);
+            },
+            child: MobileScanner(controller: _controller, onDetect: _onDetect),
+          ),
           SafeArea(
             child: Column(
               children: [
@@ -437,7 +448,7 @@ class _BarcodeScannerPageState extends State<_BarcodeScannerPage> {
                 const Padding(
                   padding: EdgeInsets.fromLTRB(28, 0, 28, 42),
                   child: Text(
-                    'Posisikan barcode atau QR code di dalam bingkai. Pemindaian berjalan otomatis.',
+                    'Arahkan kamera ke barcode atau QR code. Cubit layar untuk memperbesar atau memperkecil.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white,
@@ -461,61 +472,6 @@ class _BarcodeScannerPageState extends State<_BarcodeScannerPage> {
           tooltip: 'Ganti kamera',
           child: const Icon(Icons.cameraswitch_rounded),
         ),
-      ),
-    );
-  }
-}
-
-class _ScannerShade extends StatelessWidget {
-  const _ScannerShade();
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final width = (constraints.maxWidth - 56).clamp(240.0, 330.0);
-          return Stack(
-            alignment: Alignment.center,
-            children: [
-              ColorFiltered(
-                colorFilter: const ColorFilter.mode(
-                  Color(0x77000000),
-                  BlendMode.srcOut,
-                ),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Container(
-                      decoration: const BoxDecoration(
-                        color: Colors.black,
-                        backgroundBlendMode: BlendMode.dstOut,
-                      ),
-                    ),
-                    Center(
-                      child: Container(
-                        width: width,
-                        height: 220,
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(22),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                width: width,
-                height: 220,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: Colors.white, width: 3),
-                ),
-              ),
-            ],
-          );
-        },
       ),
     );
   }

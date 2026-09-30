@@ -12,6 +12,7 @@ import '../../models/p2h_tran_model.dart';
 import '../../services/database.dart';
 import '../../services/preference.dart';
 import '../../widgets/button_app.dart';
+import '../../widgets/sap_form_widgets.dart';
 import '../../widgets/top_bar.dart';
 import 'p2h_detail_page.dart';
 
@@ -34,6 +35,7 @@ class _P2HFormPageState extends State<P2HFormPage> {
   MapEntry<int, dynamic>? _vehicleItem;
   DateTime? _date = DateTime.now();
   String? _time = DateFormat('hh:mm').format(DateTime.now());
+  int? _companyId;
   String? _jenisId;
   int? _vehicleId;
   int _simper = 0;
@@ -44,6 +46,7 @@ class _P2HFormPageState extends State<P2HFormPage> {
   @override
   void initState() {
     super.initState();
+    _companyId = _profile?.companyId;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _db.rawQuery('''select
@@ -170,6 +173,11 @@ class _P2HFormPageState extends State<P2HFormPage> {
                 },
               ),
               const SizedBox(height: 15),
+              CompanyDropdown(
+                initialCompanyId: _profile?.companyId,
+                initialCompanyName: _profile?.company,
+                onChanged: (value) => setState(() => _companyId = value),
+              ),
               const Text(
                 'Jenis Kendaraan',
                 style: TextStyle(
@@ -499,7 +507,7 @@ class _P2HFormPageState extends State<P2HFormPage> {
                                 '${_profile?.noNik}-${DateTime.now().millisecondsSinceEpoch}0000000000'
                                     .substring(0, 24),
                             title: _remark.text,
-                            companyId: _profile?.companyId,
+                            companyId: _companyId,
                             employeeId: _profile?.id,
                             vehicleId: _vehicleId,
                             hm: null,

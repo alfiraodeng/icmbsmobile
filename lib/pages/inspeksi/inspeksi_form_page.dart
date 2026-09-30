@@ -357,12 +357,6 @@ class _InspeksiFormPageState extends State<InspeksiFormPage> {
                   setState(() => _time = val),
                 },
               ),
-              const SizedBox(height: 15),
-              CompanyDropdown(
-                initialCompanyId: _profile?.companyId,
-                initialCompanyName: _profile?.company,
-                onChanged: (value) => setState(() => _companyId = value),
-              ),
               const Text(
                 'Jenis Inspeksi',
                 style: TextStyle(
@@ -511,6 +505,11 @@ class _InspeksiFormPageState extends State<InspeksiFormPage> {
                 onChanged: (String val) => setState(() {}),
               ),
               const SizedBox(height: 15),
+              CompanyDropdown(
+                initialCompanyId: _profile?.companyId,
+                initialCompanyName: _profile?.company,
+                onChanged: (value) => setState(() => _companyId = value),
+              ),
               const Text(
                 'PJA',
                 style: TextStyle(

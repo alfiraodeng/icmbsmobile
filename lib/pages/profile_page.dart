@@ -16,6 +16,7 @@ import 'about_page.dart';
 import 'change_password_page.dart';
 import 'license_agreement_page.dart';
 import 'login_page.dart';
+import 'privacy_policy_page.dart';
 import 'sync_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -198,6 +199,31 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
           const SizedBox(height: 10),
+          ListTile(
+            leading: CircleAvatar(
+              radius: 18,
+              backgroundColor: Colors.green.shade100,
+              child: const Icon(
+                Icons.privacy_tip_rounded,
+                color: Colors.green,
+                size: 24,
+              ),
+            ),
+            title: const Text('Privacy Policy', style: TextStyle(fontSize: 16)),
+            trailing: Icon(
+              Icons.arrow_forward_ios,
+              color: Colors.indigo.shade400,
+              size: 16,
+            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const PrivacyPolicyPage(),
+                ),
+              );
+            },
+          ),
           ListTile(
             leading: CircleAvatar(
               radius: 18,
