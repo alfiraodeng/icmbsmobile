@@ -42,6 +42,7 @@ class _CoachingFormPageState extends State<CoachingFormPage> {
   DateTime? _date = DateTime.now();
   String? _time = DateFormat('hh:mm').format(DateTime.now());
   int? _temaId;
+  int? _companyId;
   int? _areaId;
   int? _locationId;
   VideoPlayerController? _videoPlayer;
@@ -52,6 +53,7 @@ class _CoachingFormPageState extends State<CoachingFormPage> {
   @override
   void initState() {
     super.initState();
+    _companyId = _profile?.companyId;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fillGpsFromDevice(silent: true);
@@ -234,6 +236,11 @@ class _CoachingFormPageState extends State<CoachingFormPage> {
                 },
               ),
               const SizedBox(height: 15),
+              CompanyDropdown(
+                initialCompanyId: _profile?.companyId,
+                initialCompanyName: _profile?.company,
+                onChanged: (value) => setState(() => _companyId = value),
+              ),
               const Text(
                 'Area Utama',
                 style: TextStyle(
@@ -682,7 +689,7 @@ class _CoachingFormPageState extends State<CoachingFormPage> {
                                 '${_profile?.noNik}-${DateTime.now().millisecondsSinceEpoch}0000000000'
                                     .substring(0, 24),
                             title: _title.text,
-                            companyId: _profile?.companyId,
+                            companyId: _companyId,
                             employeeId: _profile?.id,
                             trainerId: _profile?.id,
                             areaId: _areaId,

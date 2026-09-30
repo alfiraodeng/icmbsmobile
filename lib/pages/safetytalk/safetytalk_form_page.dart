@@ -41,6 +41,7 @@ class _SafetyTalkFormPageState extends State<SafetyTalkFormPage> {
   DateTime? _date = DateTime.now();
   String? _time = DateFormat('hh:mm').format(DateTime.now());
   int? _areaId;
+  int? _companyId;
   int? _locationId;
   VideoPlayerController? _videoPlayer;
   File? _videoFile;
@@ -51,6 +52,7 @@ class _SafetyTalkFormPageState extends State<SafetyTalkFormPage> {
   @override
   void initState() {
     super.initState();
+    _companyId = _profile?.companyId;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fillGpsFromDevice(silent: true);
@@ -203,6 +205,11 @@ class _SafetyTalkFormPageState extends State<SafetyTalkFormPage> {
                 },
               ),
               const SizedBox(height: 15),
+              CompanyDropdown(
+                initialCompanyId: _profile?.companyId,
+                initialCompanyName: _profile?.company,
+                onChanged: (value) => setState(() => _companyId = value),
+              ),
               const Text(
                 'Area',
                 style: TextStyle(
@@ -679,7 +686,7 @@ class _SafetyTalkFormPageState extends State<SafetyTalkFormPage> {
                           '${_profile?.noNik}-${DateTime.now().millisecondsSinceEpoch}0000000000'
                               .substring(0, 24),
                       title: _title.text,
-                      companyId: _profile?.companyId,
+                      companyId: _companyId,
                       employeeId: _profile?.id,
                       areaId: _areaId,
                       locationId: _locationId,

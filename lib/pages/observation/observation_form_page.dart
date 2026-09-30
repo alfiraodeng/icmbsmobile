@@ -43,6 +43,7 @@ class _ObservationFormPageState extends State<ObservationFormPage> {
   DateTime? _date = DateTime.now();
   String? _time = DateFormat('hh:mm').format(DateTime.now());
   int? _deptId;
+  int? _companyId;
   int? _docId;
   int? _riskId;
   int? _areaId;
@@ -55,6 +56,7 @@ class _ObservationFormPageState extends State<ObservationFormPage> {
   @override
   void initState() {
     super.initState();
+    _companyId = _profile?.companyId;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fillGpsFromDevice(silent: true);
@@ -272,6 +274,11 @@ class _ObservationFormPageState extends State<ObservationFormPage> {
                 },
               ),
               const SizedBox(height: 15),
+              CompanyDropdown(
+                initialCompanyId: _profile?.companyId,
+                initialCompanyName: _profile?.company,
+                onChanged: (value) => setState(() => _companyId = value),
+              ),
               const SapFormSectionTitle(
                 title: 'Lokasi Observasi',
                 subtitle: 'Isi area utama, benchmark, dan lokasi spesifik/GPS.',
@@ -733,7 +740,7 @@ class _ObservationFormPageState extends State<ObservationFormPage> {
                                 '${_profile?.noNik}-${DateTime.now().millisecondsSinceEpoch}0000000000'
                                     .substring(0, 24),
                             title: _subject.text,
-                            companyId: _profile?.companyId,
+                            companyId: _companyId,
                             employeeId: _profile?.id,
                             deptId: _deptId,
                             areaId: _areaId,

@@ -151,6 +151,157 @@ class SapFormSectionTitle extends StatelessWidget {
   }
 }
 
+class CompanyDropdown extends StatefulWidget {
+  const CompanyDropdown({
+    required this.onChanged,
+    this.initialCompanyId,
+    this.initialCompanyName,
+    super.key,
+  });
+
+  final int? initialCompanyId;
+  final String? initialCompanyName;
+  final ValueChanged<int?> onChanged;
+
+  @override
+  State<CompanyDropdown> createState() => _CompanyDropdownState();
+}
+
+class _CompanyDropdownState extends State<CompanyDropdown> {
+  final _db = DatabaseService();
+  final List<MapEntry<int, String>> _companies = [];
+  int? _selectedId;
+  bool _loading = true;
+
+  String _normalize(String value) => value
+      .toLowerCase()
+      .replaceAll('.', '')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCompanies();
+  }
+
+  Future<void> _loadCompanies() async {
+    final rows = await _db.rawQuery('''select id, "name"
+      from enum_masters
+      where deleted_at is null and type='company'
+      order by "name"''');
+    if (!mounted) return;
+
+    final databaseCompanies = rows
+        .where((row) => row['id'] != null && row['name'] != null)
+        .map((row) => MapEntry(row['id'] as int, '${row['name']}'))
+        .toList();
+    final byName = <String, MapEntry<int, String>>{
+      for (final company in databaseCompanies)
+        _normalize(company.value): company,
+    };
+
+    MapEntry<int, String> baseCompany(
+      int fallbackId,
+      String name,
+      bool Function(String normalized) matches,
+    ) {
+      return databaseCompanies.firstWhere(
+        (company) => matches(_normalize(company.value)),
+        orElse: () => MapEntry(fallbackId, name),
+      );
+    }
+
+    final indexim = baseCompany(
+      -10001,
+      'PT INDEXIM COALINDO',
+      (name) => name.contains('indexim coalindo'),
+    );
+    final udu = baseCompany(
+      -10002,
+      'PT UNGGUL DINAMIKA UTAMA',
+      (name) => name.contains('unggul dinamika utama') || name == 'udu',
+    );
+    byName[_normalize(indexim.value)] = indexim;
+    byName[_normalize(udu.value)] = udu;
+
+    final companies = byName.values.toList()
+      ..sort((a, b) => a.value.compareTo(b.value));
+    MapEntry<int, String>? selected;
+    for (final company in companies) {
+      if (company.key == widget.initialCompanyId) {
+        selected = company;
+        break;
+      }
+    }
+    if (selected == null &&
+        widget.initialCompanyName?.trim().isNotEmpty == true) {
+      final initialName = _normalize(widget.initialCompanyName!);
+      for (final company in companies) {
+        if (_normalize(company.value).contains(initialName) ||
+            initialName.contains(_normalize(company.value))) {
+          selected = company;
+          break;
+        }
+      }
+    }
+    selected ??= indexim;
+
+    setState(() {
+      _companies
+        ..clear()
+        ..addAll(companies);
+      _selectedId = selected!.key;
+      _loading = false;
+    });
+    widget.onChanged(_selectedId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Perusahaan / Mitra Kerja',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 10),
+        DropdownButtonFormField<int>(
+          key: ValueKey('company-${_selectedId ?? 'loading'}'),
+          initialValue: _selectedId,
+          isExpanded: true,
+          decoration: InputDecoration(
+            hintText:
+                _loading ? 'Memuat master perusahaan...' : 'Pilih perusahaan',
+            prefixIcon: const Padding(
+              padding: EdgeInsets.only(left: 10),
+              child: Icon(Icons.apartment_rounded, size: 24),
+            ),
+          ),
+          items: _companies
+              .map((company) => DropdownMenuItem<int>(
+                    value: company.key,
+                    child: Text(
+                      company.value,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ))
+              .toList(),
+          onChanged: _loading
+              ? null
+              : (value) {
+                  setState(() => _selectedId = value);
+                  widget.onChanged(value);
+                },
+        ),
+        const SizedBox(height: 15),
+      ],
+    );
+  }
+}
+
 Future<void> fillGpsCoordinate(
   BuildContext context,
   TextEditingController controller,

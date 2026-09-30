@@ -37,6 +37,7 @@ class _P5MFormPageState extends State<P5MFormPage> {
   DateTime? _date = DateTime.now();
   String? _time = DateFormat('hh:mm').format(DateTime.now());
   int? _topicId;
+  int? _companyId;
   int? _areaId;
   int? _locationId;
   VideoPlayerController? _videoPlayer;
@@ -47,6 +48,7 @@ class _P5MFormPageState extends State<P5MFormPage> {
   @override
   void initState() {
     super.initState();
+    _companyId = _profile?.companyId;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fillGpsFromDevice(silent: true);
@@ -215,6 +217,11 @@ class _P5MFormPageState extends State<P5MFormPage> {
                 },
               ),
               const SizedBox(height: 15),
+              CompanyDropdown(
+                initialCompanyId: _profile?.companyId,
+                initialCompanyName: _profile?.company,
+                onChanged: (value) => setState(() => _companyId = value),
+              ),
               const Text(
                 'Area',
                 style: TextStyle(
@@ -656,7 +663,7 @@ class _P5MFormPageState extends State<P5MFormPage> {
                                 '${_profile?.noNik}-${DateTime.now().millisecondsSinceEpoch}0000000000'
                                     .substring(0, 24),
                             title: _title.text,
-                            companyId: _profile?.companyId,
+                            companyId: _companyId,
                             employeeId: _profile?.id,
                             topicId: _topicId,
                             areaId: _areaId,
