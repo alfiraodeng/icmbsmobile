@@ -459,23 +459,6 @@ class _CiFormPageState extends State<CiFormPage> {
             }).toList()),
         if (answer.score != null) ...[
           const SizedBox(height: 10),
-          Row(children: [
-            Expanded(
-                child: TextFormField(
-                    initialValue: answer.value == '__NA__' ? '' : answer.value,
-                    onChanged: (v) => answer.value = v,
-                    decoration: const InputDecoration(
-                        labelText: 'Hasil ukur / observasi', isDense: true))),
-            const SizedBox(width: 8),
-            SizedBox(
-                width: 90,
-                child: TextFormField(
-                    initialValue: answer.unit,
-                    onChanged: (v) => answer.unit = v,
-                    decoration: const InputDecoration(
-                        labelText: 'Satuan', isDense: true)))
-          ]),
-          const SizedBox(height: 8),
           TextFormField(
               initialValue: answer.note,
               onChanged: (v) => answer.note = v,
