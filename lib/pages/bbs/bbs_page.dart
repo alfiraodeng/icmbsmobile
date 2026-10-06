@@ -27,7 +27,9 @@ class _BbsPageState extends State<BbsPage> {
     _reload();
   }
 
-  void _reload() => _future = BbsStorage.load();
+  void _reload() {
+    _future = BbsStorage.load();
+  }
 
   Future<void> _refresh() async {
     setState(_reload);
@@ -370,7 +372,9 @@ class _BbsListPageState extends State<BbsListPage> {
     _reload();
   }
 
-  void _reload() => _future = BbsStorage.load();
+  void _reload() {
+    _future = BbsStorage.load();
+  }
 
   @override
   Widget build(BuildContext context) {
