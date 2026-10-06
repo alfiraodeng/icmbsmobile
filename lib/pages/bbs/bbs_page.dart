@@ -667,12 +667,11 @@ class _BbsDetailPageState extends State<BbsDetailPage> {
       'assets/images/indexsafe-logo-text.png',
     );
     final logo = pw.MemoryImage(logoData.buffer.asUint8List());
-    pw.MemoryImage? evidence;
-    if (observation.evidencePath != null &&
-        File(observation.evidencePath!).existsSync()) {
-      evidence = pw.MemoryImage(
-        await File(observation.evidencePath!).readAsBytes(),
-      );
+    final evidence = <pw.MemoryImage>[];
+    for (final path in observation.evidencePaths) {
+      if (File(path).existsSync()) {
+        evidence.add(pw.MemoryImage(await File(path).readAsBytes()));
+      }
     }
 
     final document = pw.Document(
@@ -862,18 +861,48 @@ class _BbsDetailPageState extends State<BbsDetailPage> {
                 _pdfRow('Catatan Follow Up', observation.followUpNotes),
             ],
           ),
-          if (evidence != null)
+          if (evidence.isNotEmpty)
             _pdfSection(
-              'BUKTI FOTO',
+              'BUKTI FOTO (${evidence.length})',
               [
-                pw.Center(
-                  child: pw.Container(
-                    constraints: const pw.BoxConstraints(maxHeight: 260),
-                    decoration: pw.BoxDecoration(
-                      border: pw.Border.all(color: line),
-                    ),
-                    child: pw.Image(evidence, fit: pw.BoxFit.contain),
-                  ),
+                pw.Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: evidence
+                      .asMap()
+                      .entries
+                      .map(
+                        (entry) => pw.Container(
+                          width: 220,
+                          padding: const pw.EdgeInsets.all(5),
+                          decoration: pw.BoxDecoration(
+                            border: pw.Border.all(color: line),
+                            borderRadius: pw.BorderRadius.circular(5),
+                          ),
+                          child: pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            children: [
+                              pw.Text(
+                                'Foto ${entry.key + 1}',
+                                style: const pw.TextStyle(
+                                  color: grey,
+                                  fontSize: 7,
+                                ),
+                              ),
+                              pw.SizedBox(height: 4),
+                              pw.Container(
+                                height: 145,
+                                alignment: pw.Alignment.center,
+                                child: pw.Image(
+                                  entry.value,
+                                  fit: pw.BoxFit.contain,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                      .toList(),
                 ),
               ],
             ),

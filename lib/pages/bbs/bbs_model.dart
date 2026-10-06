@@ -28,7 +28,7 @@ class BbsObservation {
     required this.coachingNotes,
     required this.commitment,
     required this.dueDate,
-    required this.evidencePath,
+    required this.evidencePaths,
     required this.status,
     required this.followUpNotes,
   });
@@ -57,7 +57,7 @@ class BbsObservation {
   final String coachingNotes;
   final String commitment;
   final DateTime? dueDate;
-  final String? evidencePath;
+  final List<String> evidencePaths;
   final String status;
   final String followUpNotes;
 
@@ -87,7 +87,7 @@ class BbsObservation {
       coachingNotes: coachingNotes,
       commitment: commitment,
       dueDate: dueDate,
-      evidencePath: evidencePath,
+      evidencePaths: evidencePaths,
       status: status ?? this.status,
       followUpNotes: followUpNotes ?? this.followUpNotes,
     );
@@ -118,12 +118,19 @@ class BbsObservation {
         'coachingNotes': coachingNotes,
         'commitment': commitment,
         'dueDate': dueDate?.toIso8601String(),
-        'evidencePath': evidencePath,
+        'evidencePaths': evidencePaths,
         'status': status,
         'followUpNotes': followUpNotes,
       };
 
   factory BbsObservation.fromJson(Map<String, dynamic> json) {
+    final legacyEvidence = json['evidencePath'] as String?;
+    final evidencePaths = json['evidencePaths'] == null
+        ? <String>[
+            if (legacyEvidence != null && legacyEvidence.isNotEmpty)
+              legacyEvidence,
+          ]
+        : List<String>.from(json['evidencePaths'] as List<dynamic>);
     return BbsObservation(
       id: '${json['id']}',
       observerName: '${json['observerName'] ?? '-'}',
@@ -151,7 +158,7 @@ class BbsObservation {
       dueDate: json['dueDate'] == null
           ? null
           : DateTime.tryParse('${json['dueDate']}'),
-      evidencePath: json['evidencePath'] as String?,
+      evidencePaths: evidencePaths.take(5).toList(),
       status: '${json['status'] ?? 'Open'}',
       followUpNotes: '${json['followUpNotes'] ?? ''}',
     );

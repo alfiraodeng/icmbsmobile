@@ -132,7 +132,7 @@ class _BbsFormPageState extends State<BbsFormPage> {
   final Set<String> _immediateActions = {};
   String _workerResponse = 'Positif';
   DateTime? _dueDate;
-  String? _evidencePath;
+  final List<String> _evidencePaths = [];
   bool _saving = false;
 
   @override
@@ -245,7 +245,7 @@ class _BbsFormPageState extends State<BbsFormPage> {
       coachingNotes: _coachingNotes.text.trim(),
       commitment: _commitment.text.trim(),
       dueDate: _dueDate,
-      evidencePath: _evidencePath,
+      evidencePaths: [..._evidencePaths],
       status: requiresFollowUp ? 'Open' : 'Closed',
       followUpNotes: '',
     );
@@ -288,6 +288,10 @@ class _BbsFormPageState extends State<BbsFormPage> {
   }
 
   Future<void> _pickEvidence() async {
+    if (_evidencePaths.length >= 5) {
+      _message('Maksimal 5 foto untuk setiap observasi BBS.');
+      return;
+    }
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       builder: (context) => SafeArea(
@@ -308,12 +312,28 @@ class _BbsFormPageState extends State<BbsFormPage> {
       ),
     );
     if (source == null) return;
-    final image = await ImagePicker().pickImage(
-      source: source,
+    final picker = ImagePicker();
+    final remaining = 5 - _evidencePaths.length;
+    if (source == ImageSource.camera) {
+      final image = await picker.pickImage(
+        source: source,
+        imageQuality: 78,
+        maxWidth: 1600,
+      );
+      if (image != null) setState(() => _evidencePaths.add(image.path));
+      return;
+    }
+    final images = await picker.pickMultiImage(
       imageQuality: 78,
       maxWidth: 1600,
     );
-    if (image != null) setState(() => _evidencePath = image.path);
+    if (images.isEmpty) return;
+    final selected = images.take(remaining).map((image) => image.path);
+    setState(() => _evidencePaths.addAll(selected));
+    if (images.length > remaining && mounted) {
+      _message(
+          'Hanya $remaining foto yang ditambahkan. Batas maksimal 5 foto.');
+    }
   }
 
   @override
@@ -785,37 +805,81 @@ class _BbsFormPageState extends State<BbsFormPage> {
           onTap: _pickDueDate,
         ),
         const SizedBox(height: 16),
-        const _FieldLabel('Bukti Foto (opsional)'),
-        if (_evidencePath == null)
-          OutlinedButton.icon(
-            onPressed: _pickEvidence,
-            icon: const Icon(Icons.add_a_photo_rounded),
-            label: const Text('Tambah Foto'),
-            style: OutlinedButton.styleFrom(
-                minimumSize: const Size.fromHeight(48)),
-          )
-        else
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.file(
-                  File(_evidencePath!),
-                  height: 190,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
+        Row(
+          children: [
+            const Expanded(child: _FieldLabel('Bukti Foto (opsional)')),
+            Text(
+              '${_evidencePaths.length}/5 foto',
+              style: const TextStyle(
+                color: _blue,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
               ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: IconButton.filled(
-                  onPressed: () => setState(() => _evidencePath = null),
-                  icon: const Icon(Icons.close_rounded),
-                ),
-              ),
-            ],
+            ),
+          ],
+        ),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
           ),
+          itemCount:
+              _evidencePaths.length + (_evidencePaths.length < 5 ? 1 : 0),
+          itemBuilder: (context, index) {
+            if (index == _evidencePaths.length) {
+              return Material(
+                color: const Color(0xFFE0F2FE),
+                borderRadius: BorderRadius.circular(14),
+                child: InkWell(
+                  onTap: _pickEvidence,
+                  borderRadius: BorderRadius.circular(14),
+                  child: const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.add_a_photo_rounded, color: _blue),
+                      SizedBox(height: 6),
+                      Text(
+                        'Tambah Foto',
+                        style: TextStyle(
+                          color: _blue,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+            final path = _evidencePaths[index];
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: Image.file(File(path), fit: BoxFit.cover),
+                ),
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: IconButton.filled(
+                    visualDensity: VisualDensity.compact,
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.black.withValues(alpha: .65),
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: () =>
+                        setState(() => _evidencePaths.removeAt(index)),
+                    icon: const Icon(Icons.close_rounded, size: 18),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ],
     );
   }
@@ -887,6 +951,7 @@ class _BbsFormPageState extends State<BbsFormPage> {
             'Target': _dueDate == null
                 ? '-'
                 : DateFormat('dd MMM yyyy').format(_dueDate!),
+            'Bukti Foto': '${_evidencePaths.length} foto',
           },
         ),
       ],
