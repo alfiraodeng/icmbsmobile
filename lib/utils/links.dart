@@ -74,6 +74,13 @@ List<LinkMenuModel> listMenuSap = <LinkMenuModel>[
     route: '/coaching',
     opacity: 1,
   ),
+  LinkMenuModel(
+    title: 'BBS',
+    icon: Icons.groups_2_rounded,
+    image: '',
+    route: '/bbs',
+    opacity: 1,
+  ),
 ];
 
 List<LinkMenuModel> listMenuOhs1 = <LinkMenuModel>[
