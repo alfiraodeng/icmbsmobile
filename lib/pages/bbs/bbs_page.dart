@@ -1,7 +1,11 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 import '../../widgets/top_bar.dart';
 import 'bbs_form_page.dart';
@@ -657,132 +661,330 @@ class _BbsDetailPageState extends State<BbsDetailPage> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Future<Uint8List> _generatePdf(PdfPageFormat format) async {
     final observation = _observation;
-    return Scaffold(
-      backgroundColor: _bbsBackground,
-      appBar: const TopBar(title: 'Detail Observasi BBS'),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: observation.classification == 'Perilaku Aman'
-                  ? const Color(0xFFECFDF5)
-                  : const Color(0xFFFEF2F2),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: observation.classification == 'Perilaku Aman'
-                    ? const Color(0xFFA7F3D0)
-                    : const Color(0xFFFECACA),
+    final logoData = await rootBundle.load(
+      'assets/images/indexsafe-logo-text.png',
+    );
+    final logo = pw.MemoryImage(logoData.buffer.asUint8List());
+    pw.MemoryImage? evidence;
+    if (observation.evidencePath != null &&
+        File(observation.evidencePath!).existsSync()) {
+      evidence = pw.MemoryImage(
+        await File(observation.evidencePath!).readAsBytes(),
+      );
+    }
+
+    final document = pw.Document(
+      version: PdfVersion.pdf_1_5,
+      compress: true,
+      title: 'Laporan BBS ${observation.id}',
+      author: 'MBS SAP - System Integration Department PT INDEXIM COALINDO',
+    );
+    const blue = PdfColor.fromInt(0xFF075985);
+    const green = PdfColor.fromInt(0xFF059669);
+    const red = PdfColor.fromInt(0xFFDC2626);
+    const grey = PdfColor.fromInt(0xFF667085);
+    const line = PdfColor.fromInt(0xFFE2E8F0);
+    final classificationColor =
+        observation.classification == 'Perilaku Aman' ? green : red;
+
+    document.addPage(
+      pw.MultiPage(
+        pageFormat: format,
+        margin: const pw.EdgeInsets.fromLTRB(34, 30, 34, 34),
+        header: (context) => pw.Padding(
+          padding: const pw.EdgeInsets.only(bottom: 16),
+          child: pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Image(logo, width: 120),
+              pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.end,
+                children: [
+                  pw.Text(
+                    'MBS SAP',
+                    style: pw.TextStyle(
+                      color: blue,
+                      fontSize: 12,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                  pw.Text(
+                    observation.id,
+                    style: const pw.TextStyle(color: grey, fontSize: 8),
+                  ),
+                ],
               ),
-            ),
-            child: Row(
+            ],
+          ),
+        ),
+        footer: (context) => pw.Container(
+          padding: const pw.EdgeInsets.only(top: 10),
+          decoration: const pw.BoxDecoration(
+            border: pw.Border(top: pw.BorderSide(color: line)),
+          ),
+          child: pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Text(
+                'Developed & maintained by System Integration Department - PT INDEXIM COALINDO',
+                style: const pw.TextStyle(color: grey, fontSize: 7),
+              ),
+              pw.Text(
+                'Halaman ${context.pageNumber} / ${context.pagesCount}',
+                style: const pw.TextStyle(color: grey, fontSize: 8),
+              ),
+            ],
+          ),
+        ),
+        build: (context) => [
+          pw.Center(
+            child: pw.Column(
               children: [
-                Icon(
-                  observation.classification == 'Perilaku Aman'
-                      ? Icons.verified_rounded
-                      : Icons.report_problem_rounded,
-                  size: 38,
-                  color: observation.classification == 'Perilaku Aman'
-                      ? _bbsGreen
-                      : const Color(0xFFDC2626),
+                pw.Text(
+                  'LAPORAN OBSERVASI BBS',
+                  style: pw.TextStyle(
+                    color: blue,
+                    fontSize: 19,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        observation.classification,
-                        style: const TextStyle(
-                            fontSize: 17, fontWeight: FontWeight.w900),
-                      ),
-                      Text('${observation.riskLevel} • ${observation.status}'),
-                    ],
+                pw.SizedBox(height: 3),
+                pw.Text(
+                  'BEHAVIOUR BASED SAFETY',
+                  style: const pw.TextStyle(color: grey, fontSize: 10),
+                ),
+              ],
+            ),
+          ),
+          pw.SizedBox(height: 18),
+          pw.Container(
+            padding: const pw.EdgeInsets.all(12),
+            decoration: pw.BoxDecoration(
+              color: classificationColor.shade(0.92),
+              borderRadius: pw.BorderRadius.circular(8),
+              border: pw.Border.all(color: classificationColor, width: .8),
+            ),
+            child: pw.Row(
+              children: [
+                pw.Container(
+                  width: 10,
+                  height: 10,
+                  decoration: pw.BoxDecoration(
+                    color: classificationColor,
+                    shape: pw.BoxShape.circle,
+                  ),
+                ),
+                pw.SizedBox(width: 9),
+                pw.Expanded(
+                  child: pw.Text(
+                    observation.classification,
+                    style: pw.TextStyle(
+                      color: classificationColor,
+                      fontSize: 13,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                ),
+                pw.Text(
+                  '${observation.riskLevel} | ${observation.status}',
+                  style: pw.TextStyle(
+                    color: classificationColor,
+                    fontSize: 10,
+                    fontWeight: pw.FontWeight.bold,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
-          _DetailSection(
-            title: 'Informasi Observasi',
-            icon: Icons.info_outline_rounded,
-            children: [
-              _DetailRow(label: 'ID', value: observation.id),
-              _DetailRow(label: 'Jenis', value: observation.observationType),
-              _DetailRow(
-                  label: 'Observer',
-                  value:
-                      '${observation.observerName} (${observation.observerNik})'),
-              _DetailRow(label: 'Pekerja', value: observation.observedPerson),
-              _DetailRow(label: 'Jabatan', value: observation.observedPosition),
-              _DetailRow(label: 'Departemen', value: observation.department),
-              _DetailRow(label: 'Lokasi', value: observation.location),
-              _DetailRow(
-                label: 'Waktu',
-                value: DateFormat('dd MMMM yyyy, HH:mm')
+          pw.SizedBox(height: 14),
+          _pdfSection(
+            'INFORMASI OBSERVASI',
+            [
+              _pdfRow('Nomor Laporan', observation.id),
+              _pdfRow('Jenis Observasi', observation.observationType),
+              _pdfRow(
+                'Tanggal / Waktu',
+                DateFormat('dd MMMM yyyy, HH:mm')
                     .format(observation.observedAt),
               ),
+              _pdfRow(
+                'Observer',
+                '${observation.observerName} (${observation.observerNik})',
+              ),
+              _pdfRow('Pekerja Diamati', observation.observedPerson),
+              _pdfRow('Jabatan / Peran', observation.observedPosition),
+              _pdfRow('Unit / Departemen', observation.department),
+              _pdfRow('Lokasi', observation.location),
             ],
           ),
-          _DetailSection(
-            title: 'Perilaku & Konteks',
-            icon: Icons.psychology_alt_rounded,
-            children: [
-              _DetailRow(label: 'Kategori', value: observation.category),
-              _DetailRow(
-                  label: 'Perilaku', value: observation.behaviors.join(', ')),
-              _DetailRow(
-                  label: 'Kondisi Jalan', value: observation.roadCondition),
-              _DetailRow(label: 'Cuaca', value: observation.weatherCondition),
-              _DetailRow(label: 'Traffic', value: observation.trafficCondition),
-              _DetailRow(
-                  label: 'Faktor Pemicu',
-                  value: observation.triggerFactors.join(', ')),
+          _pdfSection(
+            'PERILAKU & KONTEKS',
+            [
+              _pdfRow('Kategori', observation.category),
+              _pdfRow('Perilaku Diamati', observation.behaviors.join('\n- '),
+                  list: true),
+              _pdfRow('Kondisi Jalan / Area', observation.roadCondition),
+              _pdfRow('Cuaca', observation.weatherCondition),
+              _pdfRow('Traffic / Aktivitas', observation.trafficCondition),
+              _pdfRow(
+                'Faktor Pemicu',
+                observation.triggerFactors.isEmpty
+                    ? '-'
+                    : observation.triggerFactors.join('\n- '),
+                list: observation.triggerFactors.isNotEmpty,
+              ),
             ],
           ),
-          _DetailSection(
-            title: 'Risiko & Coaching',
-            icon: Icons.health_and_safety_rounded,
-            children: [
-              _DetailRow(
-                  label: 'Konsekuensi',
-                  value: observation.potentialConsequence),
-              _DetailRow(
-                  label: 'Tindakan',
-                  value: observation.immediateActions.join(', ')),
-              _DetailRow(
-                  label: 'Respons Pekerja', value: observation.workerResponse),
-              _DetailRow(
-                  label: 'Catatan Coaching', value: observation.coachingNotes),
-              _DetailRow(label: 'Komitmen', value: observation.commitment),
-              if (observation.dueDate != null)
-                _DetailRow(
-                  label: 'Target Selesai',
-                  value:
-                      DateFormat('dd MMMM yyyy').format(observation.dueDate!),
-                ),
+          _pdfSection(
+            'RISIKO, TINDAKAN & COACHING',
+            [
+              _pdfRow('Level Risiko', observation.riskLevel),
+              _pdfRow(
+                  'Konsekuensi Potensial', observation.potentialConsequence),
+              _pdfRow(
+                'Tindakan Langsung',
+                observation.immediateActions.join('\n- '),
+                list: true,
+              ),
+              _pdfRow('Respons Pekerja', observation.workerResponse),
+              _pdfRow('Catatan Coaching', observation.coachingNotes),
+              _pdfRow('Komitmen Perbaikan', observation.commitment),
+              _pdfRow(
+                'Target Follow Up',
+                observation.dueDate == null
+                    ? '-'
+                    : DateFormat('dd MMMM yyyy').format(observation.dueDate!),
+              ),
+              _pdfRow('Status', observation.status),
               if (observation.followUpNotes.isNotEmpty)
-                _DetailRow(
-                    label: 'Follow Up', value: observation.followUpNotes),
+                _pdfRow('Catatan Follow Up', observation.followUpNotes),
             ],
           ),
-          if (observation.evidencePath != null &&
-              File(observation.evidencePath!).existsSync())
-            ClipRRect(
-              borderRadius: BorderRadius.circular(18),
-              child: Image.file(
-                File(observation.evidencePath!),
-                height: 210,
-                fit: BoxFit.cover,
+          if (evidence != null)
+            _pdfSection(
+              'BUKTI FOTO',
+              [
+                pw.Center(
+                  child: pw.Container(
+                    constraints: const pw.BoxConstraints(maxHeight: 260),
+                    decoration: pw.BoxDecoration(
+                      border: pw.Border.all(color: line),
+                    ),
+                    child: pw.Image(evidence, fit: pw.BoxFit.contain),
+                  ),
+                ),
+              ],
+            ),
+          pw.SizedBox(height: 14),
+          pw.Container(
+            padding: const pw.EdgeInsets.all(10),
+            decoration: pw.BoxDecoration(
+              color: const PdfColor.fromInt(0xFFF8FAFC),
+              borderRadius: pw.BorderRadius.circular(6),
+            ),
+            child: pw.Text(
+              'Laporan ini dibuat melalui aplikasi MBS SAP dan merupakan catatan observasi perilaku keselamatan di lapangan.',
+              textAlign: pw.TextAlign.center,
+              style: const pw.TextStyle(color: grey, fontSize: 8),
+            ),
+          ),
+        ],
+      ),
+    );
+    return document.save();
+  }
+
+  pw.Widget _pdfSection(String title, List<pw.Widget> children) {
+    const blue = PdfColor.fromInt(0xFF075985);
+    const line = PdfColor.fromInt(0xFFE2E8F0);
+    return pw.Container(
+      margin: const pw.EdgeInsets.only(bottom: 12),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: line),
+        borderRadius: pw.BorderRadius.circular(7),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Container(
+            width: double.infinity,
+            padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: const pw.BoxDecoration(
+              color: PdfColor.fromInt(0xFFE0F2FE),
+              borderRadius: pw.BorderRadius.only(
+                topLeft: pw.Radius.circular(7),
+                topRight: pw.Radius.circular(7),
               ),
             ),
-          const SizedBox(height: 90),
+            child: pw.Text(
+              title,
+              style: pw.TextStyle(
+                color: blue,
+                fontSize: 10,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+          ),
+          pw.Padding(
+            padding: const pw.EdgeInsets.all(12),
+            child: pw.Column(children: children),
+          ),
         ],
+      ),
+    );
+  }
+
+  pw.Widget _pdfRow(String label, String value, {bool list = false}) {
+    const grey = PdfColor.fromInt(0xFF667085);
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 7),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.SizedBox(
+            width: 125,
+            child: pw.Text(
+              label,
+              style: const pw.TextStyle(color: grey, fontSize: 9),
+            ),
+          ),
+          pw.Text(':  ', style: const pw.TextStyle(fontSize: 9)),
+          pw.Expanded(
+            child: pw.Text(
+              value.isEmpty ? '-' : '${list ? '- ' : ''}$value',
+              style: pw.TextStyle(
+                fontSize: 9,
+                fontWeight: pw.FontWeight.bold,
+                lineSpacing: 2,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: const TopBar(title: 'Laporan Observasi BBS'),
+      body: PdfPreview(
+        canChangeOrientation: false,
+        canChangePageFormat: false,
+        canDebug: false,
+        initialPageFormat: PdfPageFormat.a4,
+        padding: EdgeInsets.zero,
+        scrollViewDecoration: const BoxDecoration(color: Colors.white),
+        pdfPreviewPageDecoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+          boxShadow: const [BoxShadow(color: Colors.transparent)],
+        ),
+        pdfFileName: 'BBS-${_observation.id}.pdf',
+        build: _generatePdf,
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(
@@ -797,72 +999,6 @@ class _BbsDetailPageState extends State<BbsDetailPage> {
             label: const Text('Update Follow Up'),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _DetailSection extends StatelessWidget {
-  const _DetailSection(
-      {required this.title, required this.icon, required this.children});
-
-  final String title;
-  final IconData icon;
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: _bbsBlue, size: 20),
-              const SizedBox(width: 8),
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
-            ],
-          ),
-          const Divider(height: 24),
-          ...children,
-        ],
-      ),
-    );
-  }
-}
-
-class _DetailRow extends StatelessWidget {
-  const _DetailRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 105,
-            child: Text(label,
-                style: const TextStyle(color: Color(0xFF667085), fontSize: 12)),
-          ),
-          Expanded(
-            child: Text(
-              value.isEmpty ? '-' : value,
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
-            ),
-          ),
-        ],
       ),
     );
   }

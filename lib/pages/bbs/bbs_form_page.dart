@@ -343,44 +343,24 @@ class _BbsFormPageState extends State<BbsFormPage> {
             color: Colors.white,
             border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
           ),
-          child: Row(
-            children: [
-              if (_step > 0) ...[
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => setState(() => _step--),
-                    icon: const Icon(Icons.arrow_back_rounded),
-                    label: const Text('Kembali'),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(50),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-              ],
-              Expanded(
-                flex: 2,
-                child: FilledButton.icon(
-                  onPressed: _saving ? null : _next,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _blue,
-                    minimumSize: const Size.fromHeight(50),
-                  ),
-                  icon: Icon(
-                    _step == _stepTitles.length - 1
-                        ? Icons.save_rounded
-                        : Icons.arrow_forward_rounded,
-                  ),
-                  label: Text(
-                    _saving
-                        ? 'Menyimpan...'
-                        : _step == _stepTitles.length - 1
-                            ? 'Simpan Observasi'
-                            : 'Lanjut',
-                  ),
-                ),
-              ),
-            ],
+          child: FilledButton.icon(
+            onPressed: _saving ? null : _next,
+            style: FilledButton.styleFrom(
+              backgroundColor: _blue,
+              minimumSize: const Size.fromHeight(50),
+            ),
+            icon: Icon(
+              _step == _stepTitles.length - 1
+                  ? Icons.save_rounded
+                  : Icons.arrow_forward_rounded,
+            ),
+            label: Text(
+              _saving
+                  ? 'Menyimpan...'
+                  : _step == _stepTitles.length - 1
+                      ? 'Simpan Observasi'
+                      : 'Lanjut',
+            ),
           ),
         ),
       ),
