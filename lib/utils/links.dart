@@ -81,6 +81,13 @@ List<LinkMenuModel> listMenuSap = <LinkMenuModel>[
     route: '/bbs',
     opacity: 1,
   ),
+  LinkMenuModel(
+    title: 'CI Digital\nAssessment',
+    icon: Icons.analytics_rounded,
+    image: '',
+    route: '/ci_assessment',
+    opacity: 1,
+  ),
 ];
 
 List<LinkMenuModel> listMenuOhs1 = <LinkMenuModel>[
