@@ -42,7 +42,10 @@ class _CiFormPageState extends State<CiFormPage> {
   final _action = TextEditingController();
   final _actionOwner = TextEditingController();
   late final List<CiAnswer> _answers;
+  late final Map<String, GlobalKey> _parameterKeys;
+  late final Map<String, ExpansibleController> _groupControllers;
   final List<String> _evidence = [];
+  String? _attentionParameterId;
   int _step = 0;
   int? _companyId;
   String _shift = 'Day Shift';
@@ -69,6 +72,13 @@ class _CiFormPageState extends State<CiFormPage> {
     _companyId = _profile?.companyId;
     _areaOwner.text = _profile?.depart ?? '';
     _answers = _parameters.map((e) => CiAnswer(parameterId: e.id)).toList();
+    _parameterKeys = {
+      for (final parameter in _parameters) parameter.id: GlobalKey(),
+    };
+    _groupControllers = {
+      for (final parameter in _parameters)
+        parameter.group: ExpansibleController(),
+    };
     WidgetsBinding.instance.addPostFrameCallback((_) => fillGpsCoordinate(
         context, _coordinate, () => setState(() {}),
         silent: true));
@@ -94,6 +104,34 @@ class _CiFormPageState extends State<CiFormPage> {
   void _message(String text) => ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(text), behavior: SnackBarBehavior.floating));
 
+  bool _isUnanswered(CiAnswer answer) =>
+      answer.score == null && answer.value != '__NA__';
+
+  void _focusFirstUnanswered() {
+    final answer = _answers.firstWhere(_isUnanswered);
+    final parameter =
+        _parameters.firstWhere((item) => item.id == answer.parameterId);
+    setState(() {
+      _step = 2;
+      _attentionParameterId = parameter.id;
+    });
+    _message('${parameter.id} • ${parameter.title} belum dinilai.');
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      _groupControllers[parameter.group]?.expand();
+      await Future<void>.delayed(const Duration(milliseconds: 180));
+      if (!mounted) return;
+      final targetContext = _parameterKeys[parameter.id]?.currentContext;
+      if (targetContext != null && targetContext.mounted) {
+        await Scrollable.ensureVisible(
+          targetContext,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeOutCubic,
+          alignment: .08,
+        );
+      }
+    });
+  }
+
   bool _validate() {
     if (_step == 0 &&
         (_companyId == null ||
@@ -108,9 +146,8 @@ class _CiFormPageState extends State<CiFormPage> {
       _message('Konfirmasi standar dan desain aktif sebelum melanjutkan.');
       return false;
     }
-    if (_step == 2 &&
-        _answers.any((e) => e.score == null && e.value != '__NA__')) {
-      _message('Nilai seluruh parameter. Pilih N/A bila tidak berlaku.');
+    if ((_step == 2 || _step == 5) && _answers.any(_isUnanswered)) {
+      _focusFirstUnanswered();
       return false;
     }
     if (_step == 4 &&
@@ -430,6 +467,7 @@ class _CiFormPageState extends State<CiFormPage> {
         elevation: 0,
         color: Colors.white,
         child: ExpansionTile(
+            controller: _groupControllers[title],
             initiallyExpanded: true,
             leading: const CircleAvatar(
                 backgroundColor: Color(0xFFE6F6F6),
@@ -451,9 +489,19 @@ class _CiFormPageState extends State<CiFormPage> {
       null: 'N/A'
     };
     return Container(
+      key: _parameterKeys[item.id],
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-      decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: Color(0xFFE8EEF3)))),
+      decoration: BoxDecoration(
+          color: _attentionParameterId == item.id
+              ? const Color(0xFFFFF1F2)
+              : Colors.white,
+          border: Border(
+              top: const BorderSide(color: Color(0xFFE8EEF3)),
+              left: BorderSide(
+                  color: _attentionParameterId == item.id
+                      ? const Color(0xFFDC2626)
+                      : Colors.transparent,
+                  width: 4))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Expanded(
@@ -471,6 +519,19 @@ class _CiFormPageState extends State<CiFormPage> {
             _tag('CRITICAL', const Color(0xFFDC2626))
           ]
         ]),
+        if (_attentionParameterId == item.id) ...[
+          const SizedBox(height: 7),
+          Row(children: [
+            const Icon(Icons.error_outline_rounded,
+                size: 16, color: Color(0xFFDC2626)),
+            const SizedBox(width: 5),
+            Text('Penilaian ini belum diisi',
+                style: TextStyle(
+                    color: Colors.red.shade700,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800))
+          ])
+        ],
         const SizedBox(height: 10),
         Wrap(
             spacing: 6,
@@ -488,6 +549,9 @@ class _CiFormPageState extends State<CiFormPage> {
                       color: selected ? _cyan : const Color(0xFFD5DEE7)),
                   onSelected: (_) => setState(() {
                         answer.score = entry.key;
+                        if (_attentionParameterId == item.id) {
+                          _attentionParameterId = null;
+                        }
                         if (entry.key == null) {
                           answer.value = '__NA__';
                         } else if (answer.value == '__NA__') {
