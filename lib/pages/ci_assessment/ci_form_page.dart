@@ -36,7 +36,8 @@ class _CiFormPageState extends State<CiFormPage> {
   final _coordinate = TextEditingController();
   final _areaOwner = TextEditingController();
   final _context = TextEditingController();
-  final _ruleVersion = TextEditingController(text: '3CI Rule Set v1.0');
+  final _ruleVersion =
+      TextEditingController(text: 'Condition Index Rule Set v1.0');
   final _temporaryControls = TextEditingController();
   final _action = TextEditingController();
   final _actionOwner = TextEditingController();
@@ -218,7 +219,7 @@ class _CiFormPageState extends State<CiFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _surface,
-      appBar: TopBar(title: '${widget.type} Assessment', back: 2),
+      appBar: TopBar(title: _typeName(widget.type), back: 2),
       body: Column(children: [
         _Progress(step: _step, steps: _steps),
         Expanded(
@@ -281,7 +282,7 @@ class _CiFormPageState extends State<CiFormPage> {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _Lead(
           icon: Icons.pin_drop_rounded,
-          title: 'Lokasi & Konteks ${widget.type}',
+          title: 'Lokasi & Konteks ${_typeName(widget.type)}',
           subtitle: 'Data konteks menentukan standar teknis yang berlaku.'),
       CompanyDropdown(
           initialCompanyId: _profile?.companyId,
@@ -578,7 +579,7 @@ class _CiFormPageState extends State<CiFormPage> {
                 'Periksa kembali hasil sebelum disimpan sebagai rekaman asesmen.'),
         _resultBanner(),
         const SizedBox(height: 14),
-        _review('Assessment', '${widget.type} • ${_typeName(widget.type)}'),
+        _review('Assessment', _typeName(widget.type)),
         _review('Lokasi', '${_location.text}\n${_coordinate.text}'),
         _review('Pemilik Area', _areaOwner.text),
         _review('Konteks', _context.text),

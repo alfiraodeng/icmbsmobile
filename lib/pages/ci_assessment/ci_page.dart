@@ -119,7 +119,7 @@ class _CiAssessmentPageState extends State<CiAssessmentPage> {
                 child: Icon(Icons.analytics_rounded, color: Colors.white)),
             SizedBox(width: 10),
             Expanded(
-                child: Text('3CI Digital Assessment',
+                child: Text('Condition Index Digital Assessment',
                     style: TextStyle(
                         color: Colors.white,
                         fontSize: 20,
@@ -179,16 +179,9 @@ class _CiAssessmentPageState extends State<CiAssessmentPage> {
                         child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                          Row(children: [
-                            Text(code,
-                                style: TextStyle(
-                                    color: color, fontWeight: FontWeight.w900)),
-                            const SizedBox(width: 8),
-                            Expanded(
-                                child: Text(title,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w800)))
-                          ]),
+                          Text(title,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w800)),
                           const SizedBox(height: 4),
                           Text(subtitle,
                               style: const TextStyle(
@@ -210,18 +203,14 @@ class _CiAssessmentPageState extends State<CiAssessmentPage> {
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
             leading: CircleAvatar(
                 backgroundColor: color.withValues(alpha: .1),
-                child: Text(item.type,
-                    style: TextStyle(
-                        color: color,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w900))),
-            title: Text(item.location,
+                child: Icon(_typeIcon(item.type), color: color)),
+            title: Text(_typeLong(item.type),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontWeight: FontWeight.w800)),
             subtitle: Text(
-                '${DateFormat('dd MMM yyyy, HH:mm').format(item.assessedAt)} • ${item.operationalStatus}',
-                maxLines: 1,
+                '${item.location}\n${DateFormat('dd MMM yyyy, HH:mm').format(item.assessedAt)} • ${item.operationalStatus}',
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis),
             trailing:
                 Column(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -244,7 +233,8 @@ class _CiAssessmentPageState extends State<CiAssessmentPage> {
         Text('Belum ada assessment',
             style: TextStyle(fontWeight: FontWeight.w800)),
         SizedBox(height: 3),
-        Text('Pilih FCI, RCI, atau DCI untuk memulai.',
+        Text(
+            'Pilih Front Condition Index, Road Condition Index, atau Disposal Condition Index untuk memulai.',
             style: TextStyle(color: Colors.blueGrey))
       ]));
 }
@@ -256,7 +246,7 @@ class CiHistoryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
         backgroundColor: _ciBg,
-        appBar: const TopBar(title: 'Riwayat 3CI', back: 2),
+        appBar: const TopBar(title: 'Riwayat Condition Index', back: 2),
         body: ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: items.length,
@@ -274,21 +264,14 @@ class CiHistoryPage extends StatelessWidget {
                 ),
                 leading: CircleAvatar(
                   backgroundColor: color.withValues(alpha: .1),
-                  child: Text(
-                    item.type,
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
+                  child: Icon(_typeIcon(item.type), color: color),
                 ),
                 title: Text(
-                  item.location,
+                  _typeLong(item.type),
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
                 subtitle: Text(
-                  '${DateFormat('dd MMM yyyy, HH:mm').format(item.assessedAt)}\n${item.operationalStatus} • ${item.status}',
+                  '${item.location}\n${DateFormat('dd MMM yyyy, HH:mm').format(item.assessedAt)} • ${item.operationalStatus} • ${item.status}',
                 ),
                 trailing: Text(
                   item.index.toStringAsFixed(0),
@@ -362,7 +345,7 @@ class _CiDetailPageState extends State<CiDetailPage> {
     final params = CiCatalog.forType(_item.type);
     return Scaffold(
         backgroundColor: _ciBg,
-        appBar: TopBar(title: 'Hasil ${_item.type}', back: 2),
+        appBar: TopBar(title: 'Hasil ${_typeLong(_item.type)}', back: 2),
         body: ListView(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 30),
             children: [
@@ -398,7 +381,7 @@ class _CiDetailPageState extends State<CiDetailPage> {
               const SizedBox(height: 13),
               _section('Informasi Assessment', [
                 _row('Nomor', _item.id),
-                _row('Jenis', '${_item.type} — ${_typeLong(_item.type)}'),
+                _row('Jenis', _typeLong(_item.type)),
                 _row(
                     'Assessor', '${_item.assessorName} (${_item.assessorNik})'),
                 _row('Waktu',
@@ -475,7 +458,7 @@ class CiPdfPage extends StatelessWidget {
   final CiAssessment item;
   @override
   Widget build(BuildContext context) => Scaffold(
-      appBar: TopBar(title: 'Laporan ${item.type}', back: 2),
+      appBar: TopBar(title: 'Laporan ${_typeLong(item.type)}', back: 2),
       body: PdfPreview(
           build: _buildPdf,
           canChangePageFormat: false,
@@ -528,7 +511,7 @@ class CiPdfPage extends StatelessWidget {
         build: (_) => [
               pw.Center(
                   child: pw.Column(children: [
-                pw.Text('${item.type} TECHNICAL ASSESSMENT',
+                pw.Text('${_typeLong(item.type).toUpperCase()} ASSESSMENT',
                     style: pw.TextStyle(
                         color: navy,
                         fontSize: 18,
@@ -658,6 +641,11 @@ String _typeLong(String type) => switch (type) {
       'RCI' => 'Road Condition Index',
       'DCI' => 'Disposal Condition Index',
       _ => 'Front Condition Index'
+    };
+IconData _typeIcon(String type) => switch (type) {
+      'RCI' => Icons.add_road_rounded,
+      'DCI' => Icons.terrain_rounded,
+      _ => Icons.landscape_rounded,
     };
 Widget _section(String title, List<Widget> rows) => Container(
     margin: const EdgeInsets.only(bottom: 13),
