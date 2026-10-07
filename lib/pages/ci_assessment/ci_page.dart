@@ -415,6 +415,48 @@ class _CiDetailPageState extends State<CiDetailPage> {
                             ? 'N/A'
                             : '${a.score}/5${a.value.isNotEmpty && a.value != '__NA__' ? ' • ${a.value} ${a.unit}' : ''}${a.note.isNotEmpty ? '\n${a.note}' : ''}${a.criticalFailure ? '\nCRITICAL CONTROL FAILURE' : ''}');
                   }).toList()),
+              if (_item.answers
+                  .any((answer) => answer.evidencePaths.isNotEmpty)) ...[
+                const Text('Foto per Parameter',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+                const SizedBox(height: 8),
+                ..._item.answers
+                    .where((answer) => answer.evidencePaths.isNotEmpty)
+                    .map((answer) {
+                  final parameter =
+                      params.firstWhere((e) => e.id == answer.parameterId);
+                  return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFE2E8F0))),
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('${parameter.id} • ${parameter.title}',
+                                style: const TextStyle(
+                                    fontSize: 12, fontWeight: FontWeight.w800)),
+                            const SizedBox(height: 8),
+                            SizedBox(
+                                height: 90,
+                                child: ListView.separated(
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: answer.evidencePaths.length,
+                                    separatorBuilder: (_, __) =>
+                                        const SizedBox(width: 7),
+                                    itemBuilder: (_, index) => ClipRRect(
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: Image.file(
+                                            File(answer.evidencePaths[index]),
+                                            width: 105,
+                                            height: 90,
+                                            fit: BoxFit.cover))))
+                          ]));
+                }),
+              ],
               if (_item.evidencePaths.isNotEmpty) ...[
                 const Text('Bukti Foto',
                     style:
@@ -474,6 +516,16 @@ class CiPdfPage extends StatelessWidget {
       if (File(path).existsSync()) {
         photos.add(pw.MemoryImage(await File(path).readAsBytes()));
       }
+    }
+    final parameterPhotos = <String, List<pw.MemoryImage>>{};
+    for (final answer in item.answers) {
+      final images = <pw.MemoryImage>[];
+      for (final path in answer.evidencePaths) {
+        if (File(path).existsSync()) {
+          images.add(pw.MemoryImage(await File(path).readAsBytes()));
+        }
+      }
+      if (images.isNotEmpty) parameterPhotos[answer.parameterId] = images;
     }
     final params = CiCatalog.forType(item.type);
     const navy = PdfColor.fromInt(0xFF123B63),
@@ -608,6 +660,43 @@ class CiPdfPage extends StatelessWidget {
                       ]);
                     })
                   ]),
+              if (parameterPhotos.isNotEmpty) ...[
+                pw.SizedBox(height: 14),
+                pw.Text('FOTO PER PARAMETER',
+                    style: pw.TextStyle(
+                        color: navy,
+                        fontSize: 11,
+                        fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(height: 6),
+                ...item.answers
+                    .where((answer) =>
+                        parameterPhotos.containsKey(answer.parameterId))
+                    .map((answer) {
+                  final parameter =
+                      params.firstWhere((e) => e.id == answer.parameterId);
+                  return pw.Container(
+                      margin: const pw.EdgeInsets.only(bottom: 8),
+                      child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Text('${parameter.id} • ${parameter.title}',
+                                style: pw.TextStyle(
+                                    fontSize: 8,
+                                    fontWeight: pw.FontWeight.bold)),
+                            pw.SizedBox(height: 4),
+                            pw.Wrap(
+                                spacing: 5,
+                                runSpacing: 5,
+                                children: parameterPhotos[answer.parameterId]!
+                                    .map((photo) => pw.Container(
+                                        width: 145,
+                                        height: 100,
+                                        child: pw.Image(photo,
+                                            fit: pw.BoxFit.cover)))
+                                    .toList())
+                          ]));
+                }),
+              ],
               if (photos.isNotEmpty) ...[
                 pw.SizedBox(height: 14),
                 pw.Text('BUKTI FOTO',

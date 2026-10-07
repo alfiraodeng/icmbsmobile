@@ -215,6 +215,45 @@ class _CiFormPageState extends State<CiFormPage> {
     }
   }
 
+  Future<void> _pickParameterEvidence(CiAnswer answer) async {
+    if (answer.evidencePaths.length >= 3) {
+      _message('Maksimal 3 foto untuk setiap parameter penilaian.');
+      return;
+    }
+    final source = await showModalBottomSheet<ImageSource>(
+        context: context,
+        builder: (context) => SafeArea(
+                child: Wrap(children: [
+              ListTile(
+                  leading: const Icon(Icons.camera_alt_rounded),
+                  title: const Text('Ambil Foto'),
+                  onTap: () => Navigator.pop(context, ImageSource.camera)),
+              ListTile(
+                  leading: const Icon(Icons.photo_library_rounded),
+                  title: const Text('Pilih dari Galeri'),
+                  onTap: () => Navigator.pop(context, ImageSource.gallery)),
+            ])));
+    if (source == null) return;
+    final picker = ImagePicker();
+    if (source == ImageSource.camera) {
+      final image = await picker.pickImage(
+          source: source, imageQuality: 78, maxWidth: 1600);
+      if (image != null) {
+        setState(() => answer.evidencePaths.add(image.path));
+      }
+      return;
+    }
+    final images =
+        await picker.pickMultiImage(imageQuality: 78, maxWidth: 1600);
+    if (images.isEmpty) return;
+    final remaining = 3 - answer.evidencePaths.length;
+    setState(() => answer.evidencePaths
+        .addAll(images.take(remaining).map((image) => image.path)));
+    if (images.length > remaining && mounted) {
+      _message('Foto dibatasi maksimal 3 untuk setiap parameter.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -465,6 +504,47 @@ class _CiFormPageState extends State<CiFormPage> {
               onChanged: (v) => answer.note = v,
               decoration: const InputDecoration(
                   labelText: 'Catatan / temuan', isDense: true)),
+          const SizedBox(height: 8),
+          Row(children: [
+            const Expanded(
+                child: Text('Foto pendukung (opsional)',
+                    style:
+                        TextStyle(fontSize: 12, fontWeight: FontWeight.w700))),
+            Text('${answer.evidencePaths.length}/3',
+                style: const TextStyle(fontSize: 11, color: Colors.blueGrey)),
+            const SizedBox(width: 6),
+            IconButton.filledTonal(
+                tooltip: 'Tambah foto opsional',
+                onPressed: () => _pickParameterEvidence(answer),
+                icon: const Icon(Icons.add_a_photo_rounded, size: 19))
+          ]),
+          if (answer.evidencePaths.isNotEmpty)
+            SizedBox(
+                height: 76,
+                child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: answer.evidencePaths.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 7),
+                    itemBuilder: (_, index) => Stack(children: [
+                          ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.file(
+                                  File(answer.evidencePaths[index]),
+                                  width: 76,
+                                  height: 76,
+                                  fit: BoxFit.cover)),
+                          Positioned(
+                              right: 2,
+                              top: 2,
+                              child: InkWell(
+                                  onTap: () => setState(() =>
+                                      answer.evidencePaths.removeAt(index)),
+                                  child: const CircleAvatar(
+                                      radius: 10,
+                                      backgroundColor: Colors.black54,
+                                      child: Icon(Icons.close,
+                                          size: 13, color: Colors.white))))
+                        ]))),
           if (item.critical)
             SwitchListTile(
                 value: answer.criticalFailure,

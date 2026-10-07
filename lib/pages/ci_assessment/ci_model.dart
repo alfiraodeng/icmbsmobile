@@ -150,12 +150,15 @@ class CiAnswer {
       this.value = '',
       this.unit = '',
       this.note = '',
-      this.criticalFailure = false});
+      List<String>? evidencePaths,
+      this.criticalFailure = false})
+      : evidencePaths = evidencePaths ?? <String>[];
   final String parameterId;
   int? score;
   String value;
   String unit;
   String note;
+  final List<String> evidencePaths;
   bool criticalFailure;
 
   Map<String, dynamic> toJson() => {
@@ -164,6 +167,7 @@ class CiAnswer {
         'value': value,
         'unit': unit,
         'note': note,
+        'evidencePaths': evidencePaths,
         'criticalFailure': criticalFailure
       };
   factory CiAnswer.fromJson(Map<String, dynamic> json) => CiAnswer(
@@ -172,6 +176,7 @@ class CiAnswer {
       value: '${json['value'] ?? ''}',
       unit: '${json['unit'] ?? ''}',
       note: '${json['note'] ?? ''}',
+      evidencePaths: List<String>.from(json['evidencePaths'] ?? const []),
       criticalFailure: json['criticalFailure'] == true);
 }
 
