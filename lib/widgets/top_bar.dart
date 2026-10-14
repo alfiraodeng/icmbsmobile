@@ -4,6 +4,7 @@ import '../pages/home_page.dart';
 import '../pages/notif_page.dart';
 import '../services/database.dart';
 import '../services/preference.dart';
+import '../services/offline_sync_service.dart';
 import '../utils/globals.dart' as globals;
 
 class TopBar extends StatefulWidget implements PreferredSizeWidget {
@@ -52,6 +53,27 @@ class _TopBarState extends State<TopBar> {
       where tr.deleted_at is null and ((tr.pja_id=${_profile?.id} and tr.status<1) or (tr.pic_id=${_profile?.id} and tr.status<2))''').then((val) async {
       await PreferenceService.setNotif(val.length);
     });
+  }
+
+  Future<void> _syncReports() async {
+    final sync = OfflineSyncService.instance;
+    if (!sync.state.value.isOnline) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Tidak ada koneksi. Laporan tetap aman di perangkat.'),
+        backgroundColor: Color(0xFFB91C1C),
+      ));
+      return;
+    }
+    await sync.syncNow();
+    if (!mounted) return;
+    final pending = sync.state.value.pendingCount;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(pending == 0
+          ? 'Semua laporan telah tersinkron.'
+          : '$pending laporan masih menunggu sinkronisasi.'),
+      backgroundColor:
+          pending == 0 ? const Color(0xFF047857) : const Color(0xFFB91C1C),
+    ));
   }
 
   Future<bool> _showBackDialog() async {
@@ -122,6 +144,42 @@ class _TopBarState extends State<TopBar> {
       centerTitle: false,
       toolbarHeight: 70,
       actions: [
+        ValueListenableBuilder<OfflineSyncState>(
+          valueListenable: OfflineSyncService.instance.state,
+          builder: (context, sync, _) => Stack(
+            clipBehavior: Clip.none,
+            children: [
+              IconButton(
+                tooltip: sync.isOnline ? 'Sinkronkan laporan' : 'Mode offline',
+                onPressed: _syncReports,
+                icon: Icon(
+                  sync.isOnline ? Icons.sync_rounded : Icons.cloud_off_rounded,
+                  color: sync.pendingCount > 0 || !sync.isOnline
+                      ? const Color(0xFFDC2626)
+                      : const Color(0xFF059669),
+                ),
+              ),
+              if (sync.pendingCount > 0)
+                Positioned(
+                  right: 1,
+                  top: 3,
+                  child: Container(
+                    constraints: const BoxConstraints(minWidth: 16),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    decoration: const BoxDecoration(
+                        color: Color(0xFFDC2626), shape: BoxShape.circle),
+                    child: Text('${sync.pendingCount}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800)),
+                  ),
+                ),
+            ],
+          ),
+        ),
         Stack(
           children: [
             IconButton(

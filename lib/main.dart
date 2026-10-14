@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'pages/splash_page.dart';
 import 'services/background.dart';
 import 'services/notification.dart';
+import 'services/offline_sync_service.dart';
 import 'services/preference.dart';
 
 Future<void> main() async {
@@ -10,6 +11,7 @@ Future<void> main() async {
 
   await PreferenceService.init();
   await NotificationService.init();
+  await OfflineSyncService.instance.init();
   await BackgroundService.instance.init();
 
   runApp(const MyApp());

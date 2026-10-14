@@ -82,7 +82,7 @@ List<LinkMenuModel> listMenuSap = <LinkMenuModel>[
     opacity: 1,
   ),
   LinkMenuModel(
-    title: 'CI Digital\nAssessment',
+    title: 'Index\nCondition',
     icon: Icons.analytics_rounded,
     image: '',
     route: '/ci_assessment',

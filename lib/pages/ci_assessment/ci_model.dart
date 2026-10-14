@@ -16,129 +16,80 @@ class CiParameter {
 
 class CiCatalog {
   static const fci = <CiParameter>[
+    CiParameter('F01', 'Lantai Front (Front Floor)', 'Parameter Front', 15),
+    CiParameter('F02', 'Ruang Manuver & Spotting', 'Parameter Front', 15),
+    CiParameter('F03', 'Safety Berm / Tanggul Front', 'Parameter Front', 15,
+        critical: true),
+    CiParameter('F04', 'Kondisi Dinding / Highwall', 'Parameter Front', 15,
+        critical: true),
+    CiParameter('F05', 'Drainase & Sump Front', 'Parameter Front', 10),
+    CiParameter('F06', 'Kebersihan Ceceran Material', 'Parameter Front', 10),
     CiParameter(
-        'F01', 'Kekerasan dan daya dukung lantai front', 'Kondisi Lantai', 10,
-        critical: true),
-    CiParameter('F02', 'Kerataan dan cross slope lantai', 'Kondisi Lantai', 6),
-    CiParameter('F03', 'Lumpur, air dan genangan', 'Kondisi Lantai', 6,
-        critical: true),
-    CiParameter('F04', 'Lebar front dan ruang manuver', 'Geometri & Posisi', 8,
-        critical: true),
-    CiParameter('F05', 'Posisi truck saat loading', 'Geometri & Posisi', 6,
-        critical: true),
-    CiParameter(
-        'F06', 'Posisi dan stabilitas excavator', 'Geometri & Posisi', 8,
-        critical: true),
-    CiParameter('F07', 'Tinggi dan geometri face/bench', 'Stabilitas Front', 8,
-        critical: true),
-    CiParameter(
-        'F08', 'Material lepas, overhang dan rockfall', 'Stabilitas Front', 10,
-        critical: true),
-    CiParameter(
-        'F09', 'Retakan atau indikasi ketidakstabilan', 'Stabilitas Front', 10,
-        critical: true),
-    CiParameter('F10', 'Segregasi material', 'Operasional', 7, critical: true),
-    CiParameter('F11', 'Blind spot dan line of sight', 'Operasional', 5,
-        critical: true),
-    CiParameter('F12', 'Pengaturan traffic masuk dan keluar', 'Operasional', 4),
-    CiParameter('F13', 'Antrean dan area parkir', 'Operasional', 3),
-    CiParameter('F14', 'Drainase dan limpasan air', 'Lingkungan Kerja', 4,
-        critical: true),
-    CiParameter('F15', 'Penerangan dan jarak pandang', 'Lingkungan Kerja', 4,
-        critical: true),
-    CiParameter(
-        'F16', 'Komunikasi dan positive confirmation', 'Kontrol Kritis', 5,
-        critical: true),
+        'F07', 'Posisi & Ketinggian Alat (Bench)', 'Parameter Front', 10),
+    CiParameter('F08', 'Rambu & Penerangan Front', 'Parameter Front', 10),
   ];
 
   static const rci = <CiParameter>[
-    CiParameter('R01', 'Lebar jalan dua arah', 'Geometri Jalan', 10,
-        critical: true, regulatory: true),
-    CiParameter('R02', 'Lebar jalan satu arah', 'Geometri Jalan', 10,
-        critical: true, regulatory: true),
-    CiParameter('R03', 'Tinggi safety berm', 'Proteksi Tepi', 10,
-        critical: true),
-    CiParameter('R04', 'Kontinuitas safety berm', 'Proteksi Tepi', 7,
-        critical: true),
-    CiParameter('R05', 'Cross fall', 'Geometri Jalan', 5, regulatory: true),
-    CiParameter('R06', 'Longitudinal grade', 'Geometri Jalan', 8,
-        regulatory: true),
-    CiParameter('R07', 'Radius tikungan dan swept path', 'Geometri Jalan', 6,
-        critical: true),
-    CiParameter('R08', 'Superelevasi', 'Geometri Jalan', 5, critical: true),
-    CiParameter('R09', 'Sight distance', 'Visibilitas', 6, critical: true),
-    CiParameter('R10', 'Lubang atau pothole', 'Permukaan Jalan', 5,
-        critical: true),
-    CiParameter('R11', 'Rutting atau alur roda', 'Permukaan Jalan', 5,
-        critical: true),
-    CiParameter('R12', 'Corrugation', 'Permukaan Jalan', 3),
     CiParameter(
-        'R13', 'Material lepas, spillage atau batu', 'Permukaan Jalan', 4,
-        critical: true),
-    CiParameter('R14', 'Soft spot dan kondisi subgrade', 'Permukaan Jalan', 5,
-        critical: true),
-    CiParameter('R15', 'Lumpur dan permukaan licin', 'Permukaan Jalan', 5,
-        critical: true),
-    CiParameter('R16', 'Debu dan jarak pandang', 'Visibilitas', 4,
-        critical: true),
-    CiParameter('R17', 'Side drain', 'Drainase', 4),
-    CiParameter('R18', 'Culvert dan cross drain', 'Drainase', 4,
-        critical: true),
-    CiParameter('R19', 'Genangan dan water crossing', 'Drainase', 5,
-        critical: true),
-    CiParameter('R20', 'Erosi dan scouring', 'Drainase', 4, critical: true),
-    CiParameter('R21', 'Kontrol persimpangan', 'Traffic Control', 5,
-        critical: true),
-    CiParameter('R22', 'Rambu dan delineator', 'Traffic Control', 3),
-    CiParameter('R23', 'Penerangan', 'Visibilitas', 3, critical: true),
-    CiParameter('R24', 'Kemacetan dan obstruction', 'Traffic Control', 3,
-        critical: true),
+        'R01', 'Surfacing and Material', 'Pilar 1 • Permukaan Jalan', 20),
     CiParameter(
-        'R25', 'Kontrol roadwork dan diversion sementara', 'Traffic Control', 5,
-        critical: true),
+        'R02', 'Undulation / Corrugation', 'Pilar 1 • Permukaan Jalan', 35),
+    CiParameter(
+        'R03', 'Spoil (Lebar Jalan 18m)', 'Pilar 1 • Permukaan Jalan', 5),
+    CiParameter('R04', 'Tinggi Tanggul 3/4 Ban',
+        'Pilar 2 • Safety Berm & Fasilitas', 10),
+    CiParameter('R05', 'Road Attachment (Rambu / Delineator)',
+        'Pilar 2 • Safety Berm & Fasilitas', 5),
+    CiParameter('R06', 'Dust (Pengendalian Debu)',
+        'Pilar 2 • Safety Berm & Fasilitas', 5),
+    CiParameter('R07', 'Crossfall Terbentuk (0.5% - 1%)',
+        'Pilar 3 • Drainage & Perkerasan', 10),
+    CiParameter('R08', 'Parit / Tali Air Terbentuk',
+        'Pilar 3 • Drainage & Perkerasan', 10),
   ];
 
   static const dci = <CiParameter>[
-    CiParameter('D01', 'Stabilitas tepi disposal', 'Stabilitas Disposal', 12,
-        critical: true),
-    CiParameter('D02', 'Tension crack', 'Stabilitas Disposal', 12,
-        critical: true),
+    CiParameter('D01', 'Daya Dukung & Kerataan Lantai Dump',
+        'Parameter Dump Condition', 15),
+    CiParameter('D02', 'Tanggul Pengaman (Safety Berm)',
+        'Parameter Dump Condition', 15),
     CiParameter(
-        'D03', 'Penurunan tanah dan sloughing', 'Stabilitas Disposal', 8,
-        critical: true),
-    CiParameter('D04', 'Tinggi bundwall', 'Proteksi Tepi', 8, critical: true),
-    CiParameter('D05', 'Kontinuitas bundwall', 'Proteksi Tepi', 8,
-        critical: true),
-    CiParameter('D06', 'Daya dukung tanah', 'Kondisi Area', 8, critical: true),
-    CiParameter('D07', 'Lumpur dan saturasi', 'Kondisi Area', 5,
-        critical: true),
-    CiParameter('D08', 'Area manuver', 'Operasional Dumping', 6,
-        critical: true),
+        'D03', 'Kondisi Crest & Tepi Dumping', 'Parameter Dump Condition', 15),
     CiParameter(
-        'D09', 'Approach grade dan cross slope', 'Operasional Dumping', 4,
-        critical: true),
-    CiParameter('D10', 'Jarak dumping dan stand-off', 'Operasional Dumping', 10,
-        critical: true),
-    CiParameter('D11', 'Ketersediaan dozer', 'Sumber Daya', 4, critical: true),
-    CiParameter('D12', 'Spotter atau control person', 'Kontrol Operasional', 4,
-        critical: true),
-    CiParameter('D13', 'Urutan dan arah dumping', 'Kontrol Operasional', 4,
-        critical: true),
-    CiParameter('D14', 'Separasi traffic dan antrean', 'Kontrol Operasional', 4,
-        critical: true),
-    CiParameter('D15', 'Drainase dan air di bawah tepi', 'Lingkungan Area', 5,
-        critical: true),
-    CiParameter('D16', 'Penerangan dan jarak pandang', 'Lingkungan Area', 4,
-        critical: true),
-    CiParameter('D17', 'Radio dan positive confirmation', 'Kontrol Kritis', 4,
-        critical: true),
-    CiParameter('D18', 'Rekomendasi geoteknik terkini', 'Kontrol Kritis', 10,
-        critical: true),
+        'D04', 'Counter Grade Lantai Dump', 'Parameter Dump Condition', 15),
+    CiParameter(
+        'D05', 'Drainase & Saluran Air Dump', 'Parameter Dump Condition', 10),
+    CiParameter('D06', 'Penataan Spillage & Kebersihan',
+        'Parameter Dump Condition', 10),
+    CiParameter(
+        'D07', 'Rambu K3 & Lampu Penerangan', 'Parameter Dump Condition', 10),
+    CiParameter(
+        'D08', 'Spotter & Pola Manuver Unit', 'Parameter Dump Condition', 10),
+  ];
+
+  static const spi = <CiParameter>[
+    CiParameter(
+        'S01', 'Kapasitas Endapan Sedimen', 'Parameter Sediment Pond', 15),
+    CiParameter('S02', 'Kondisi & Kestabilan Tanggul Kolam',
+        'Parameter Sediment Pond', 15),
+    CiParameter(
+        'S03', 'Sekat Baffle Pengendapan', 'Parameter Sediment Pond', 15),
+    CiParameter(
+        'S04', 'Saluran Pelimpah (Spillway)', 'Parameter Sediment Pond', 15),
+    CiParameter(
+        'S05', 'Fasilitas Dosing Bahan Kimia', 'Parameter Sediment Pond', 10),
+    CiParameter('S06', 'Kualitas Air Fisik (Kekeruhan / TSS)',
+        'Parameter Sediment Pond', 10),
+    CiParameter('S07', 'Titik Penaatan & Alat Ukur Debit',
+        'Parameter Sediment Pond', 10),
+    CiParameter(
+        'S08', 'Rambu K3, Pagar & Ringbuoy', 'Parameter Sediment Pond', 10),
   ];
 
   static List<CiParameter> forType(String type) => switch (type) {
         'RCI' => rci,
         'DCI' => dci,
+        'SPI' => spi,
         _ => fci,
       };
 }
@@ -154,7 +105,7 @@ class CiAnswer {
       this.criticalFailure = false})
       : evidencePaths = evidencePaths ?? <String>[];
   final String parameterId;
-  int? score;
+  double? score;
   String value;
   String unit;
   String note;
@@ -172,7 +123,7 @@ class CiAnswer {
       };
   factory CiAnswer.fromJson(Map<String, dynamic> json) => CiAnswer(
       parameterId: '${json['parameterId']}',
-      score: json['score'] as int?,
+      score: (json['score'] as num?)?.toDouble(),
       value: '${json['value'] ?? ''}',
       unit: '${json['unit'] ?? ''}',
       note: '${json['note'] ?? ''}',
@@ -351,11 +302,13 @@ class CiAssessment {
 class CiRules {
   static double index(List<CiAnswer> answers, List<CiParameter> params) {
     var score = 0.0, maximum = 0.0;
+    final maximumScore =
+        params.isNotEmpty && params.first.id.startsWith('R') ? 4.0 : 5.0;
     for (final answer in answers) {
       if (answer.score == null) continue;
       final parameter = params.firstWhere((e) => e.id == answer.parameterId);
       score += answer.score! * parameter.weight;
-      maximum += 5 * parameter.weight;
+      maximum += maximumScore * parameter.weight;
     }
     return maximum == 0 ? 0 : score / maximum * 100;
   }

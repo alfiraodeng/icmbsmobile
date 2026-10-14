@@ -653,23 +653,28 @@ class _BbsFormPageState extends State<BbsFormPage> {
           style: TextStyle(color: Colors.black54, fontSize: 12),
         ),
         const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: triggers
               .map(
-                (item) => FilterChip(
-                  label: Text(item, style: const TextStyle(fontSize: 11)),
-                  selected: _triggerFactors.contains(item),
-                  selectedColor: const Color(0xFFDDF2FF),
-                  checkmarkColor: _blue,
-                  onSelected: (selected) => setState(() {
-                    if (selected) {
-                      _triggerFactors.add(item);
-                    } else {
-                      _triggerFactors.remove(item);
-                    }
-                  }),
+                (item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 7),
+                  child: FilterChip(
+                    label: Align(
+                        alignment: Alignment.centerLeft,
+                        child:
+                            Text(item, style: const TextStyle(fontSize: 11))),
+                    selected: _triggerFactors.contains(item),
+                    selectedColor: const Color(0xFFDDF2FF),
+                    checkmarkColor: _blue,
+                    onSelected: (selected) => setState(() {
+                      if (selected) {
+                        _triggerFactors.add(item);
+                      } else {
+                        _triggerFactors.remove(item);
+                      }
+                    }),
+                  ),
                 ),
               )
               .toList(),

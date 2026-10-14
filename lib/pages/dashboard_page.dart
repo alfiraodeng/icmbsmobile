@@ -310,26 +310,18 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(138),
+        preferredSize: const Size.fromHeight(82),
         child: AppBar(
-          toolbarHeight: 138,
+          toolbarHeight: 82,
           automaticallyImplyLeading: false,
           surfaceTintColor: Colors.transparent,
           centerTitle: true,
           elevation: 0,
           title: Padding(
-            padding: const EdgeInsets.only(top: 14, bottom: 8),
+            padding: const EdgeInsets.symmetric(vertical: 12),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Image.asset(
-                  'assets/images/home-indexsafe.png',
-                  height: 42,
-                  width: 46,
-                  fit: BoxFit.contain,
-                  filterQuality: FilterQuality.high,
-                ),
-                const SizedBox(height: 8),
                 SizedBox(
                   height: 50,
                   child: Stack(
@@ -756,6 +748,8 @@ class _DashboardPageState extends State<DashboardPage> {
           zoomDelta: .5,
           wheelPxPerZoomLevel: 90
         });
+        // Keep mandatory map-provider attribution, without Leaflet branding.
+        map.attributionControl.setPrefix(false);
 
         map.on('preclick', function() {
           map.closePopup();

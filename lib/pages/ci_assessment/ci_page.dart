@@ -7,6 +7,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
+import '../../services/offline_sync_service.dart';
 import '../../widgets/top_bar.dart';
 import 'ci_form_page.dart';
 import 'ci_model.dart';
@@ -37,7 +38,7 @@ class _CiAssessmentPageState extends State<CiAssessmentPage> {
   @override
   Widget build(BuildContext context) => Scaffold(
         backgroundColor: _ciBg,
-        appBar: const TopBar(title: 'CI Digital Technical Assessment'),
+        appBar: const TopBar(title: 'Index Condition'),
         body: FutureBuilder<List<CiAssessment>>(
             future: _future,
             builder: (_, snapshot) {
@@ -76,6 +77,12 @@ class _CiAssessmentPageState extends State<CiAssessmentPage> {
                             'Kesiapan dan kondisi area disposal/dumping.',
                             Icons.terrain_rounded,
                             const Color(0xFF7C3AED)),
+                        _typeCard(
+                            'SPI',
+                            'Sediment Pond Index',
+                            'Kondisi kolam sediment, tanggul, dan aliran air.',
+                            Icons.water_drop_rounded,
+                            const Color(0xFF0EA5A8)),
                         const SizedBox(height: 18),
                         Row(children: [
                           const Expanded(
@@ -119,7 +126,7 @@ class _CiAssessmentPageState extends State<CiAssessmentPage> {
                 child: Icon(Icons.analytics_rounded, color: Colors.white)),
             SizedBox(width: 10),
             Expanded(
-                child: Text('Condition Index Digital Assessment',
+                child: Text('Index Condition',
                     style: TextStyle(
                         color: Colors.white,
                         fontSize: 20,
@@ -134,7 +141,7 @@ class _CiAssessmentPageState extends State<CiAssessmentPage> {
             _metric('${data.length}', 'Total'),
             _metric('$open', 'Open'),
             _metric(
-                '${data.where((e) => e.criticalOverride).length}', 'Critical')
+                '${data.where((e) => e.status == 'Closed').length}', 'Closed')
           ]),
         ]));
   }
@@ -212,15 +219,23 @@ class _CiAssessmentPageState extends State<CiAssessmentPage> {
                 '${item.location}\n${DateFormat('dd MMM yyyy, HH:mm').format(item.assessedAt)} • ${item.operationalStatus}',
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis),
-            trailing:
-                Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Text(item.index.toStringAsFixed(0),
-                  style: TextStyle(
-                      color: color, fontSize: 18, fontWeight: FontWeight.w900)),
-              Text(item.band,
-                  style: TextStyle(
-                      color: color, fontSize: 8, fontWeight: FontWeight.w800))
-            ])));
+            isThreeLine: true,
+            titleAlignment: ListTileTitleAlignment.center,
+            trailing: SizedBox(
+              width: 78,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(item.index.toStringAsFixed(0),
+                      style: TextStyle(
+                          color: color,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900)),
+                  _ciSyncBadge(item, compact: true),
+                ],
+              ),
+            )));
   }
 
   Widget _empty() => Container(
@@ -273,12 +288,19 @@ class CiHistoryPage extends StatelessWidget {
                 subtitle: Text(
                   '${item.location}\n${DateFormat('dd MMM yyyy, HH:mm').format(item.assessedAt)} • ${item.operationalStatus} • ${item.status}',
                 ),
-                trailing: Text(
-                  item.index.toStringAsFixed(0),
-                  style: TextStyle(
-                    fontSize: 20,
-                    color: color,
-                    fontWeight: FontWeight.w900,
+                trailing: SizedBox(
+                  width: 78,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(item.index.toStringAsFixed(0),
+                          style: TextStyle(
+                              fontSize: 20,
+                              color: color,
+                              fontWeight: FontWeight.w900)),
+                      _ciSyncBadge(item, compact: true),
+                    ],
                   ),
                 ),
               ),
@@ -296,48 +318,7 @@ class CiDetailPage extends StatefulWidget {
 }
 
 class _CiDetailPageState extends State<CiDetailPage> {
-  late CiAssessment _item = widget.assessment;
-  Future<void> _verify() async {
-    final notes = TextEditingController();
-    final ok = await showModalBottomSheet<bool>(
-        context: context,
-        isScrollControlled: true,
-        builder: (context) => Padding(
-            padding: EdgeInsets.fromLTRB(
-                20, 20, 20, MediaQuery.viewInsetsOf(context).bottom + 20),
-            child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Verifikasi / Reinspection',
-                      style:
-                          TextStyle(fontSize: 19, fontWeight: FontWeight.w900)),
-                  const SizedBox(height: 7),
-                  const Text(
-                      'Catat hasil pemeriksaan ulang setelah action diselesaikan.'),
-                  const SizedBox(height: 14),
-                  TextField(
-                      controller: notes,
-                      maxLines: 4,
-                      decoration: const InputDecoration(
-                          hintText:
-                              'Hasil verifikasi dan bukti efektivitas...')),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                          onPressed: () => Navigator.pop(context, true),
-                          icon: const Icon(Icons.verified_rounded),
-                          label: const Text('Tandai Terverifikasi')))
-                ])));
-    if (ok != true || notes.text.trim().isEmpty) return;
-    final updated = _item.copyWith(
-        status: 'Closed',
-        verificationNotes: notes.text.trim(),
-        verifiedAt: DateTime.now());
-    await CiStorage.save(updated);
-    if (mounted) setState(() => _item = updated);
-  }
+  late final CiAssessment _item = widget.assessment;
 
   @override
   Widget build(BuildContext context) {
@@ -367,9 +348,6 @@ class _CiDetailPageState extends State<CiDetailPage> {
                               style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w700)),
-                          if (_item.criticalOverride)
-                            const Text('Critical override',
-                                style: TextStyle(color: Colors.white70))
                         ]),
                     const Spacer(),
                     Text(_item.index.toStringAsFixed(1),
@@ -378,6 +356,8 @@ class _CiDetailPageState extends State<CiDetailPage> {
                             fontSize: 36,
                             fontWeight: FontWeight.w900))
                   ])),
+              const SizedBox(height: 13),
+              _ciSyncStatusCard(_item),
               const SizedBox(height: 13),
               _section('Informasi Assessment', [
                 _row('Nomor', _item.id),
@@ -391,10 +371,7 @@ class _CiDetailPageState extends State<CiDetailPage> {
                 _row('Konteks', _item.context),
                 _row('Rule Set', _item.ruleVersion)
               ]),
-              _section('Risiko & Action', [
-                _row('Prioritas', _item.priority),
-                _row('Risk Input',
-                    'C${_item.consequence} × L${_item.likelihood} • ${_item.exposure}'),
+              _section('Tindakan', [
                 _row('Kontrol Sementara', _item.temporaryControls),
                 _row('Corrective Action', _item.action),
                 _row('PIC', _item.actionOwner),
@@ -402,8 +379,6 @@ class _CiDetailPageState extends State<CiDetailPage> {
                 _row('Validitas',
                     DateFormat('dd MMM yyyy').format(_item.validUntil)),
                 _row('Status', _item.status),
-                if (_item.verificationNotes.isNotEmpty)
-                  _row('Hasil Verifikasi', _item.verificationNotes)
               ]),
               _section(
                   'Parameter Teknis',
@@ -413,7 +388,7 @@ class _CiDetailPageState extends State<CiDetailPage> {
                         '${p.id} • ${p.title}',
                         a.score == null
                             ? 'N/A'
-                            : '${a.score}/5${a.value.isNotEmpty && a.value != '__NA__' ? ' • ${a.value} ${a.unit}' : ''}${a.note.isNotEmpty ? '\n${a.note}' : ''}${a.criticalFailure ? '\nCRITICAL CONTROL FAILURE' : ''}');
+                            : '${_scoreText(_item.type, a.score!)}, ${_scoreLabel(_item.type, a.score!)}${a.value.isNotEmpty && a.value != '__NA__' ? ' • ${a.value} ${a.unit}' : ''}${a.note.isNotEmpty ? '\n${a.note}' : ''}');
                   }).toList()),
               if (_item.answers
                   .any((answer) => answer.evidencePaths.isNotEmpty)) ...[
@@ -482,15 +457,6 @@ class _CiDetailPageState extends State<CiDetailPage> {
                       minimumSize: const Size.fromHeight(50)),
                   icon: const Icon(Icons.picture_as_pdf_rounded),
                   label: const Text('Lihat Laporan PDF')),
-              if (_item.status != 'Closed') ...[
-                const SizedBox(height: 9),
-                OutlinedButton.icon(
-                    onPressed: _verify,
-                    style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(50)),
-                    icon: const Icon(Icons.verified_rounded),
-                    label: const Text('Verifikasi / Reinspection'))
-              ],
             ]));
   }
 }
@@ -611,19 +577,12 @@ class CiPdfPage extends StatelessWidget {
                 _pdfRow('Rule Set', item.ruleVersion)
               ]),
               _pdfSection('KEPUTUSAN, RISIKO & ACTION', [
-                _pdfRow('Critical Override',
-                    item.criticalOverride ? 'YA' : 'Tidak'),
-                _pdfRow('Prioritas', item.priority),
-                _pdfRow('Risk Input',
-                    'C${item.consequence} × L${item.likelihood} • ${item.exposure}'),
                 _pdfRow('Kontrol Sementara', item.temporaryControls),
                 _pdfRow('Corrective Action', item.action),
                 _pdfRow('PIC / Target',
                     '${item.actionOwner} • ${DateFormat('dd MMM yyyy').format(item.dueDate)}'),
                 _pdfRow('Berlaku Sampai',
-                    DateFormat('dd MMM yyyy').format(item.validUntil)),
-                if (item.verificationNotes.isNotEmpty)
-                  _pdfRow('Verifikasi', item.verificationNotes)
+                    DateFormat('dd MMM yyyy').format(item.validUntil))
               ]),
               pw.Text('HASIL PARAMETER TEKNIS',
                   style: pw.TextStyle(
@@ -654,9 +613,11 @@ class CiPdfPage extends StatelessWidget {
                       return pw.TableRow(children: [
                         _cell(p.id),
                         _cell(p.title),
-                        _cell(a.score?.toString() ?? 'N/A'),
+                        _cell(a.score == null
+                            ? 'N/A'
+                            : '${_scoreText(item.type, a.score!)} ${_scoreLabel(item.type, a.score!)}'),
                         _cell(
-                            '${a.value == '__NA__' ? '' : a.value} ${a.unit}\n${a.note}${a.criticalFailure ? '\nCRITICAL FAILURE' : ''}')
+                            '${a.value == '__NA__' ? '' : a.value} ${a.unit}\n${a.note}')
                       ]);
                     })
                   ]),
@@ -720,22 +681,43 @@ class CiPdfPage extends StatelessWidget {
   }
 }
 
-Color _resultColor(CiAssessment item) =>
-    item.criticalOverride || item.index < 50
-        ? const Color(0xFFDC2626)
-        : item.index < 80
-            ? const Color(0xFFF59E0B)
-            : const Color(0xFF059669);
+Color _resultColor(CiAssessment item) => item.index < 50
+    ? const Color(0xFFDC2626)
+    : item.index < 80
+        ? const Color(0xFFF59E0B)
+        : const Color(0xFF059669);
 String _typeLong(String type) => switch (type) {
       'RCI' => 'Road Condition Index',
       'DCI' => 'Disposal Condition Index',
+      'SPI' => 'Sediment Pond Index',
       _ => 'Front Condition Index'
     };
 IconData _typeIcon(String type) => switch (type) {
       'RCI' => Icons.add_road_rounded,
       'DCI' => Icons.terrain_rounded,
+      'SPI' => Icons.water_drop_rounded,
       _ => Icons.landscape_rounded,
     };
+String _scoreText(String type, double score) =>
+    type == 'FCI' || type == 'DCI' || type == 'SPI'
+        ? score == 5
+            ? '100'
+            : score == 3.5
+                ? '70'
+                : '40'
+        : type == 'RCI'
+            ? score.toStringAsFixed(1)
+            : score.toStringAsFixed(score == score.roundToDouble() ? 0 : 1);
+String _scoreLabel(String type, double score) =>
+    type == 'FCI' || type == 'DCI' || type == 'SPI'
+        ? score == 5
+            ? 'Standar'
+            : score == 3.5
+                ? 'Perhatian'
+                : 'Kritis'
+        : type == 'RCI'
+            ? '/4'
+            : '/5';
 Widget _section(String title, List<Widget> rows) => Container(
     margin: const EdgeInsets.only(bottom: 13),
     padding: const EdgeInsets.all(15),
@@ -762,6 +744,83 @@ Widget _row(String label, String value) => Padding(
               style: const TextStyle(
                   fontSize: 12, fontWeight: FontWeight.w700, height: 1.35)))
     ]));
+
+Widget _ciSyncBadge(CiAssessment item, {bool compact = false}) =>
+    FutureBuilder<bool>(
+      future: OfflineSyncService.instance.isPending('condition-index', item.id),
+      builder: (_, snapshot) {
+        final pending = snapshot.data != false;
+        final color =
+            pending ? const Color(0xFFDC2626) : const Color(0xFF059669);
+        return Container(
+          margin: const EdgeInsets.only(top: 3),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: .1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(
+                pending
+                    ? Icons.cloud_upload_outlined
+                    : Icons.cloud_done_outlined,
+                size: compact ? 11 : 15,
+                color: color),
+            const SizedBox(width: 3),
+            Text(
+                pending ? (compact ? 'Lokal' : 'Belum tersinkron') : 'Terkirim',
+                style: TextStyle(
+                    color: color,
+                    fontSize: compact ? 8 : 11,
+                    fontWeight: FontWeight.w800)),
+          ]),
+        );
+      },
+    );
+
+Widget _ciSyncStatusCard(CiAssessment item) => FutureBuilder<bool>(
+      future: OfflineSyncService.instance.isPending('condition-index', item.id),
+      builder: (_, snapshot) {
+        final pending = snapshot.data != false;
+        final color =
+            pending ? const Color(0xFFDC2626) : const Color(0xFF059669);
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: .08),
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: color.withValues(alpha: .35)),
+          ),
+          child: Row(children: [
+            Icon(
+                pending
+                    ? Icons.cloud_upload_outlined
+                    : Icons.cloud_done_outlined,
+                color: color),
+            const SizedBox(width: 10),
+            Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  Text(
+                      pending
+                          ? 'Tersimpan lokal • belum tersinkron'
+                          : 'Terkirim ke server',
+                      style:
+                          TextStyle(color: color, fontWeight: FontWeight.w900)),
+                  const SizedBox(height: 2),
+                  Text(
+                      pending
+                          ? 'Laporan aman di perangkat dan akan dikirim saat sinkronisasi tersedia.'
+                          : 'Laporan sudah berhasil disimpan di server.',
+                      style: const TextStyle(
+                          fontSize: 11, color: Colors.blueGrey)),
+                ])),
+          ]),
+        );
+      },
+    );
+
 pw.Widget _pdfSection(String title, List<pw.Widget> rows) => pw.Container(
     margin: const pw.EdgeInsets.only(bottom: 12),
     padding: const pw.EdgeInsets.all(10),
